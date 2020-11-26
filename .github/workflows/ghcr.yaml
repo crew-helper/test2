@@ -6,7 +6,6 @@ name: Manual workflow
 # or API.
 on:
   pull_request:
-  push:
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
