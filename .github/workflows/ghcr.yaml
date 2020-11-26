@@ -5,6 +5,8 @@ name: Manual workflow
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
+  pull_request:
+  push:
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
@@ -31,6 +33,10 @@ jobs:
         echo "Hello ${{ github.event.inputs.name }}"
         echo ${{ secrets.GITHUB_TOKEN }}
         go version
+        echo "GITHUB_REF=${GITHUB_REF}"
+        echo ${{ github.base_ref }}
+        echo ${{ github.ref }}
+        echo ${{ github.head_ref }}
 
   ghcr:
     runs-on: ubuntu-latest
