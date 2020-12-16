@@ -75,7 +75,13 @@ jobs:
         git add test.*
         git status
         git commit -m "Commit stuff"
-        git push --set-upstream origin v1 --force
+        git push --set-upstream origin v1
+
+    - name: Push changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: v1 #${{ github.ref }}
     # - name: Push changes
     #   uses: ad-m/github-push-action@master
     #   with:
