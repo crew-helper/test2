@@ -5,7 +5,7 @@ name: Manual workflow
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
-  pull_request:
+  # pull_request:
   push:
     tag:
       - 'v*'
@@ -71,17 +71,17 @@ jobs:
 
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git checkout -b "v1" #version tag
+        git checkout -b "v2" #version tag
         git add test.*
         git status
         git commit -m "Commit stuff"
-        git push origin v1 --force #
+        git push origin v2 --force #
 
     - name: pull-request-action
       uses: vsoch/pull-request-action@1.0.6
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH_PREFIX: "v1"
+        PULL_REQUEST_FROM_BRANCH: "v2"
         PULL_REQUEST_BRANCH: "main"
     # - name: Push changes
     #   uses: ad-m/github-push-action@master
