@@ -8,7 +8,7 @@ on:
   # pull_request:
   create:
     tags:
-      - v*
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
