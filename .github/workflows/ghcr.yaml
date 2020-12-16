@@ -75,14 +75,14 @@ jobs:
         git add test.*
         git status
         git commit -m "Commit stuff"
-        git push origin v1 --force # 
+        git push origin v1 --force #
 
     - name: pull-request-action
       uses: vsoch/pull-request-action@1.0.6
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH_PREFIX: "v1"
-        PULL_REQUEST_BRANCH: "master"
+        PULL_REQUEST_BRANCH: "main"
     # - name: Push changes
     #   uses: ad-m/github-push-action@master
     #   with:
