@@ -6,9 +6,9 @@ name: Manual workflow
 # or API.
 on:
   # pull_request:
-  push:
-    tag:
-      - 'v*'
+  create:
+    tags:
+      - v*
   workflow_dispatch:
     inputs:
       tag:
