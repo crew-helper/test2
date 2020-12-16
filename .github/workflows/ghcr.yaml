@@ -77,11 +77,12 @@ jobs:
         git commit -m "Commit stuff"
         git push --set-upstream origin v1
 
-    - name: Push changes
-      uses: ad-m/github-push-action@v0.6.0
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: v1 #${{ github.ref }}
+      - name: pull-request-action
+        uses: vsoch/pull-request-action@1.0.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_PREFIX: "v1"
+          PULL_REQUEST_BRANCH: "master"
     # - name: Push changes
     #   uses: ad-m/github-push-action@master
     #   with:
