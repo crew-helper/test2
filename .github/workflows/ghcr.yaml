@@ -75,7 +75,7 @@ jobs:
         git add test.*
         git status
         git commit -m "Commit stuff"
-        git push origin v1
+        git push origin v1 --force # 
 
     - name: pull-request-action
       uses: vsoch/pull-request-action@1.0.6
