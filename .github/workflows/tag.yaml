@@ -20,6 +20,12 @@ jobs:
   test-release:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
       - name: Create simple description #TODO another version
         run: |
           echo "Commits: " > changelog.txt
