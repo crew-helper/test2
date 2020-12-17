@@ -5,7 +5,6 @@ name: Manual workflow
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
-  push:
   create:
     tags:
       - 'v*'
@@ -41,9 +40,26 @@ jobs:
         run: |
           echo nes2
 
+  nes3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: Changelog
+        env:
+          REPO: leo-ri/test2
+      # - name: test
+      #   run: |
+      #     echo ${{ steps.Changelog.outputs.changelog }}
+
   greet:
     # The type of runner that the job will run on
     needs: [nes1, nes2]
+    if: ${{ true == false }}
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -157,3 +173,34 @@ jobs:
   #         docker push "${image}"
   #         echo "::set-output name=image::$image"
   #         docker images | grep dev-test2
+
+  test-release:
+    runs-on: ubuntu-latest
+      steps:
+
+      - name: Create simple description #TODO another version
+        run: |
+          echo "Commits: " > changelog.txt
+          #find previos tag
+          start_tag=$(git for-each-ref refs/tags/ --count=2 --sort=-version:refname --format='%(refname:short)' | awk 'NR==2')
+          if [[ -n "${start_tag}"" ]]; then
+            git log ${start_tag}...${INPUT_LAST_TAG} --pretty=format:"  %s" >> changelog.txt
+          else
+            git log --pretty=format:"  %s" >> changelog.txt # first tag
+          fi
+
+          cat changelog.txt
+        with:
+          last_tag: ${{ github.ref }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body_path: changelog.txt
+          draft: true
+          prerelease: false
