@@ -19,7 +19,7 @@ jobs:
 
   test-release:
     runs-on: ubuntu-latest
-      steps:
+    steps:
       - name: Create simple description #TODO another version
         run: |
           echo "Commits: " > changelog.txt
