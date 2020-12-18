@@ -8,6 +8,7 @@ on:
       tag:
         description: "Release tag:"
         required: true
+
 jobs:
   golangci:
     name: lint
@@ -96,8 +97,8 @@ jobs:
 
     - name: Tag and push
       uses: ./.github/actions/auto-push
-        with:
-          version: ${{ github.ref }}
+      with:
+        version: ${{ github.ref }}
 
     - name: Create simple description
       uses: ./.github/actions/changelog
