@@ -4,9 +4,9 @@ name: Publish image to Registry
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 jobs:
@@ -30,4 +30,3 @@ jobs:
         repository: ${{ secrets.DOCKER_REPO }}
         registry: ${{ secrets.DOCKER_REGISTRY }}
         tags: ${{ steps.prepare.outputs.tag }}
-

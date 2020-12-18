@@ -4,11 +4,10 @@ name: Release workflow
 
 on:
   workflow_dispatch:
-    input:
+    inputs:
       tag:
-        description: "Release tag: *"
+        description: "Release tag:"
         required: true
-
 jobs:
   golangci:
     name: lint
