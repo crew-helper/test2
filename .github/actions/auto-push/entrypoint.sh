@@ -9,5 +9,5 @@ git status
 git commit -m "Update configuration"
 # git push origin ${version} --force
 git push origin main --force
-git tag "v${version}"
+git tag "v${INPUT_VERSION}"
 git push origin --tags
