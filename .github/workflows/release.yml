@@ -5,7 +5,7 @@ name: Release workflow
 on:
   workflow_dispatch:
     inputs:
-      tag:
+      version:
         description: "Release tag:"
         required: true
 
@@ -73,7 +73,7 @@ jobs:
 
     - name: Tag version
       run: |
-        echo "tversion::"
+        echo ${{ github.event.inputs.version }}
 
     # - name: Push Atlas Operator to Registry
     #   uses: docker/build-push-action@v1
