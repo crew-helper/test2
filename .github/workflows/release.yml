@@ -61,7 +61,7 @@ jobs:
   #TODO: add int/e2e. probably remove above, because
 
   create-release:
-    name: Push to Registry
+    name: Create Release
     needs: [golangci, shellcheck, unit-test]
     runs-on: ubuntu-latest
     steps:
