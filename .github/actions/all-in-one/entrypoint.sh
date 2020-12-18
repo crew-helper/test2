@@ -1,7 +1,6 @@
 #!/bin/sh
 
 target_dir="deploy"
-version="v1t"
 mkdir "${target_dir}"
 
 #create all-in-one config
