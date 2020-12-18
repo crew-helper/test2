@@ -1,0 +1,8 @@
+name: 'Changelog'
+description: 'simply copy commit messages from git log to file'
+outputs:
+  changelog:
+    description: 'changelog file for release description(release-body)'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
