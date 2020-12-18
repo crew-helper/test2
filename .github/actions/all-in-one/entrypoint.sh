@@ -10,5 +10,5 @@ kustomize build config/crd > "${target_dir}"/all-in-one.yaml
 cd config/manager && kustomize edit set image controller="${INPUT_IMAGE_URL}"
 cd - && kustomize build config/default >> "${target_dir}"/all-in-one.yaml
 
-cp "${target_dir}"/all-in-one.yaml "${target_dir}"/all-in-one-${version}.yaml
+cp "${target_dir}"/all-in-one.yaml "${target_dir}"/all-in-one-"${INPUT_VERSION}".yaml
 cat "${target_dir}"/all-in-one.yaml
