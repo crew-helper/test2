@@ -18,9 +18,3 @@ else
         --field branch="$DESTINATION_BRANCH" \
         --field sha="$SHA"
 fi
-    gh api --method PUT /repos/leo-ri/test2/contents/$FILE_TO_COMMIT \
-        --field message="$MESSAGE" \
-        --field content="$CONTENT" \
-        --field encoding="base64" \
-        --field branch="$DESTINATION_BRANCH" \
-        --field sha="$SHA"
