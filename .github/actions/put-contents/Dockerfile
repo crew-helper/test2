@@ -1,8 +1,9 @@
 FROM alpine/git:latest
 RUN mkdir /ghcli
 WORKDIR /ghcli
-RUN wget https://github.com/cli/cli/releases/download/v1.4.0/gh_1.4.0_linux_386.tar.gz -O ghcli.tar.gz
-RUN tar --strip-components=1 -xf ghcli.tar.gz
+RUN wget http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/github-cli-1.3.1-r0.apk
+RUN apk update
+RUN apk add --upgrade github-cli
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.sh /home/entrypoint.sh
