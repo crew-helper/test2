@@ -1,8 +1,10 @@
 FROM alpine/git:latest
-RUN mkdir /ghcli
-RUN wget http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/github-cli-1.3.1-r0.apk
-RUN apk update
-RUN apk add --allow-untrusted ghcli/github-cli-1.3.1-r0.apk
+# Install GitHub CLI
+RUN mkdir /ghcli && \
+    cd /ghcli && \
+    wget http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/github-cli-1.3.1-r0.apk && \
+    apk update && \
+    apk add --allow-untrusted github-cli-1.3.1-r0.apk
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.sh /home/entrypoint.sh
