@@ -1,4 +1,5 @@
 # GitHub workflow for package configurations, build image and push to repo
+# TODO remove additional user after: https://github.com/actions/runner/issues/667
 
 name: Release workflow
 
@@ -99,7 +100,7 @@ jobs:
       run: |
         set -x
         tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
-        
+
     - name: Create simple description
       uses: ./.github/actions/changelog
       with:

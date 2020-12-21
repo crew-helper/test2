@@ -1,7 +1,11 @@
 #!/bin/sh
 
-git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git config --local user.name "github-actions[bot]"
+gpg2 -k
+gpg2 --help
+
+git config --local user.email "crew.helper@yahoo.com"
+git config --local user.name "Crew Helper"
+git
 
 # git checkout -b "${version}" #version tag
 git add *all-in-one*
