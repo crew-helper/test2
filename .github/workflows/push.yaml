@@ -48,7 +48,7 @@ jobs:
       #       --field sha="$SHA"
 
       - name: test gh
-        uses: ./.github/actions/commit-sign
+        uses: ./.github/actions/put-contents
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FILE_TO_COMMIT: ao-all-in-one-.tar.gz
