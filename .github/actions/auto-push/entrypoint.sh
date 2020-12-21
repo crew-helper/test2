@@ -4,7 +4,7 @@ git config --local user.email "41898282+github-actions[bot]@users.noreply.github
 git config --local user.name "github-actions[bot]"
 
 # git checkout -b "${version}" #version tag
-git add deploy/all-in-one*
+git add deploy/ao-all-in-one*
 git status
 git commit -m "Update configuration"
 # git push origin ${version} --force
