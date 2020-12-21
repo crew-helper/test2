@@ -1,15 +1,14 @@
 #!/bin/sh
 
-git config --local user.email "crew.helper@yahoo.com"
-git config --local user.name "Crew Helper"
+gh --help
 
-
-# git checkout -b "${version}" #version tag
-# git add *all-in-one*
-# git status
-# git commit -m "Update configuration"
-# git push origin ${version} --force
-# git push origin main --force
-git push origin sign
-# git tag "v${INPUT_VERSION}"
-# git push origin --tags
+export TODAY=$( date -u '+%Y-%m-%d' )
+export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
+export SHA=$( git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT )
+export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+gh api --method PUT /repos/leo-ri/test2/contents/$FILE_TO_COMMIT \
+    --field message="$MESSAGE" \
+    --field content="$CONTENT" \
+    --field encoding="base64" \
+    --field branch="$DESTINATION_BRANCH" \
+    --field sha="$SHA"
