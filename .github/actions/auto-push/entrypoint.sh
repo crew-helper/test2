@@ -6,7 +6,6 @@ git config --local user.name "Crew Helper"
 date > t.txt
 git checkout -b "test-${version}" #version tag
 git pull
-
 git add .
 git status
 git commit -m "Update configuration"
