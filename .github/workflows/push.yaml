@@ -1,0 +1,60 @@
+name: TEST push
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  push:
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # - name: Create all-in-one configuration
+      #   uses: ./.github/actions/all-in-one
+      #   with:
+      #     IMAGE_URL: leori/atlas-ci:v4 #${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:${{ github.ref }}
+      #     version: ${{ github.event.inputs.version }}
+
+
+
+      # - name: Create configuration package
+      #   run: |
+      #     set -x
+      #     tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
+
+      # - name: Commit changes
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     FILE_TO_COMMIT: ao-all-in-one-.tar.gz
+      #     DESTINATION_BRANCH: sign
+      #   run: |
+      #     export TODAY=$( date -u '+%Y-%m-%d' )
+      #     export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
+      #     export SHA=$( git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT )
+      #     export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+      #     gh api --method PUT /repos/leo-ri/test2/contents/$FILE_TO_COMMIT \
+      #       --field message="$MESSAGE" \
+      #       --field content="$CONTENT" \
+      #       --field encoding="base64" \
+      #       --field branch="$DESTINATION_BRANCH" \
+      #       --field sha="$SHA"
+
+      # - name: test gh
+      #   uses: ./.github/actions/put-contents
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     FILE_TO_COMMIT: ao-all-in-one-.tar.gz
+      #     DESTINATION_BRANCH: sign
+
+      - name: test gh
+        uses: ./.github/actions/auto-push
+        env:
+          version: "v1.0"

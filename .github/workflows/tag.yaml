@@ -3,9 +3,10 @@ name: MergedBranchTest
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
-  push:
-    tag:
-      - 'v*'
+  workflow_dispatch:
+  # push:
+  #   tag:
+  #     - 'v*'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

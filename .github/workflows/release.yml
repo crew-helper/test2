@@ -1,11 +1,12 @@
 # GitHub workflow for package configurations, build image and push to repo
+# TODO remove additional user after: https://github.com/actions/runner/issues/667
 
 name: Release workflow
 
 on:
   workflow_dispatch:
     inputs:
-      tag:
+      version:
         description: "Release tag:"
         required: true
 
@@ -73,7 +74,7 @@ jobs:
 
     - name: Tag version
       run: |
-        echo "tversion::"
+        echo ${{ github.event.inputs.version }}
 
     # - name: Push Atlas Operator to Registry
     #   uses: docker/build-push-action@v1
@@ -90,15 +91,15 @@ jobs:
         IMAGE_URL: leori/atlas-ci:v4 #${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:${{ github.ref }}
         version: ${{ github.event.inputs.version }}
 
-    - name: Create configuration package
-      run: |
-        set -x
-        tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
-
     - name: Tag and push
       uses: ./.github/actions/auto-push
       with:
         version: ${{ github.event.inputs.version }}
+
+    - name: Create configuration package
+      run: |
+        set -x
+        tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
 
     - name: Create simple description
       uses: ./.github/actions/changelog
