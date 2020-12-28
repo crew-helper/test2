@@ -47,9 +47,14 @@ jobs:
       #       --field branch="$DESTINATION_BRANCH" \
       #       --field sha="$SHA"
 
+      # - name: test gh
+      #   uses: ./.github/actions/put-contents
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     FILE_TO_COMMIT: ao-all-in-one-.tar.gz
+      #     DESTINATION_BRANCH: sign
+
       - name: test gh
-        uses: ./.github/actions/put-contents
+        uses: ./.github/actions/auto-push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILE_TO_COMMIT: ao-all-in-one-.tar.gz
-          DESTINATION_BRANCH: sign
+          version: "v1.0"
