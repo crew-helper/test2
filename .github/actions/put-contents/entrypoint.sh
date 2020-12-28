@@ -2,8 +2,9 @@
 
 #test
 mkdir -p delete/me
-$FILE_TO_COMMIT="delete/me/delete_me.txt"
+FILE_TO_COMMIT="delete/me/delete_me.txt"
 date >> $FILE_TO_COMMIT
+cat $FILE_TO_COMMIT
 
 export MESSAGE="generated $FILE_TO_COMMIT"
 export SHA=$(git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT)
