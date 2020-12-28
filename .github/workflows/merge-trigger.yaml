@@ -10,7 +10,7 @@ on:
 jobs:
   # This workflow contains a single job called "greet"
   merge-test:
-    if: github.event.pull_request.merged == true
+    if: (github.event.pull_request.merged == true) && (startsWith(github.event.pull_request.head.ref, 'test-'))
     runs-on: ubuntu-latest
     steps:
       - name: test merge

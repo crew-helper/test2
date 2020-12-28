@@ -1,13 +1,16 @@
 #!/bin/sh
 
-git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git config --local user.name "github-actions[bot]"
+git config --local user.email "crew.helper@yahoo.com"
+git config --local user.name "Crew Helper"
 
-# git checkout -b "${version}" #version tag
-git add deploy/all-in-one*
+date > t.txt
+git checkout -b "test-${version}" #version tag
+git pull
+git add .
 git status
 git commit -m "Update configuration"
-# git push origin ${version} --force
-git push origin main --force
-git tag "v${INPUT_VERSION}"
-git push origin --tags
+git push origin "test-${version}"
+# git push origin main --force
+# git push origin sign
+# git tag "v${INPUT_VERSION}"
+# git push origin --tags
