@@ -51,6 +51,5 @@ jobs:
         uses: ./.github/actions/put-contents
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FOLDER_TO_COMMIT: delete_me/test/
           FILE_TO_COMMIT: ao-all-in-one-.tar.gz
           DESTINATION_BRANCH: sign

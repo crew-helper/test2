@@ -1,10 +1,5 @@
 #!/bin/sh
-
-#test
-mkdir -p delete/me
-FILE_TO_COMMIT="delete/me/delete_me.txt"
-date >> $FILE_TO_COMMIT
-cat $FILE_TO_COMMIT
+#commit file to the destination branch
 
 export MESSAGE="generated $FILE_TO_COMMIT"
 export SHA=$(git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT)
