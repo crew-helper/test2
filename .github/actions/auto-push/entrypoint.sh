@@ -3,7 +3,7 @@
 git config --local user.email "crew.helper@yahoo.com"
 git config --local user.name "Crew Helper"
 
-date >> t.txt
+date > t.txt
 git checkout -b "test-${version}" #version tag
 git pull
 git add .
