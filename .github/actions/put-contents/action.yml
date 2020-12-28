@@ -1,13 +1,13 @@
 name: 'Auto commit and push'
 description: 'after autogeneration workflow should commit and push'
 inputs:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN:
     description: "Action token"
     required: true
-  FOLDER_TO_COMMIT: delete_me/test/
+  FOLDER_TO_COMMIT:
     description: "delete it"
     required: true
-  FILE_TO_COMMIT: ao-all-in-one-.tar.gz
+  FILE_TO_COMMIT:
     description: "Target file which will be committed"
     required: true
   DESTINATION_BRANCH:
