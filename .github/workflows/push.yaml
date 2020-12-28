@@ -17,18 +17,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create all-in-one configuration
-        uses: ./.github/actions/all-in-one
-        with:
-          IMAGE_URL: leori/atlas-ci:v4 #${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:${{ github.ref }}
-          version: ${{ github.event.inputs.version }}
+      # - name: Create all-in-one configuration
+      #   uses: ./.github/actions/all-in-one
+      #   with:
+      #     IMAGE_URL: leori/atlas-ci:v4 #${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:${{ github.ref }}
+      #     version: ${{ github.event.inputs.version }}
 
 
 
-      - name: Create configuration package
-        run: |
-          set -x
-          tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
+      # - name: Create configuration package
+      #   run: |
+      #     set -x
+      #     tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
 
       # - name: Commit changes
       #   env:
