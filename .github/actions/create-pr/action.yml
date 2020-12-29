@@ -1,0 +1,5 @@
+name: 'Auto commit and push'
+description: 'after autogeneration workflow should commit and push'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

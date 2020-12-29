@@ -12,6 +12,14 @@ export SHA=$(git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT)
 export CONTENT=$(base64 $FILE_TO_COMMIT)
 echo "$DESTINATION_BRANCH:$FILE_TO_COMMIT:$SHA"
 
+# #TODO change API
+# git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+# git config --local user.name "github-actions[bot]"
+
+# date > t.txt
+# git checkout -b "$DESTINATION_BRANCH"
+
+# Commit to the branch (exept main)
 if [ "$SHA" = "$DESTINATION_BRANCH:$FILE_TO_COMMIT" ]; then
     echo "not exist"
     gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
@@ -28,3 +36,6 @@ else
         --field branch="$DESTINATION_BRANCH" \
         --field sha="$SHA"
 fi
+
+# Create Pull Request
+# gh pr create --title "Release ${VERSION}" --body "Auto-commit"
