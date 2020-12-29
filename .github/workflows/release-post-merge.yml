@@ -10,7 +10,7 @@ on:
 jobs:
   create-release:
     name: Create Release
-    if: (github.event.pull_request.merged == true) && (startsWith(github.event.pull_request.head.ref, 'release')) #TODO why can't i use env.MERGED?
+    if: (github.event.pull_request.merged == true) && (startsWith(github.event.pull_request.head.ref, 'release'))
     runs-on: ubuntu-latest
     steps:
 
