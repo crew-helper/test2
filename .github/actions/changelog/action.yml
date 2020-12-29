@@ -1,8 +1,12 @@
 name: 'Changelog'
 description: 'simply copy commit messages from git log to file'
+input:
+  tag:
+    description: "tag release format: vx.x.x"
+    required: true
 outputs:
   changelog:
-    description: 'changelog file for release description(release-body)'
+    description: 'changelog txt file for release description(release-body)'
 runs:
   using: 'docker'
   image: 'Dockerfile'
