@@ -50,6 +50,6 @@ jobs:
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
 
     - name: Create PR
-      uses: ./.github/actions/crate-pr
+      uses: ./.github/actions/create-pr
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

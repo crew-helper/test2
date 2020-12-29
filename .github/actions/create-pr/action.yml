@@ -1,5 +1,5 @@
-name: 'Auto commit and push'
-description: 'after autogeneration workflow should commit and push'
+name: 'Create PR'
+description: 'create PR with configuration'
 runs:
   using: 'docker'
   image: 'Dockerfile'

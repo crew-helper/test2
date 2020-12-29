@@ -18,14 +18,14 @@ echo "$DESTINATION_BRANCH:$FILE_TO_COMMIT:$SHA"
 
 # Commit to the branch (exept main)
 if [ "$SHA" = "$DESTINATION_BRANCH:$FILE_TO_COMMIT" ]; then
-    echo "not exist"
+    echo "File does not exist"
     gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
         --field message="$MESSAGE" \
         --field content="$CONTENT" \
         --field encoding="base64" \
         --field branch="$DESTINATION_BRANCH"
 else
-    echo "exist"
+    echo "File exists"
     gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
         --field message="$MESSAGE" \
         --field content="$CONTENT" \
