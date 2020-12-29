@@ -33,7 +33,7 @@ jobs:
     - name: Create configuration package
       run: |
         set -x
-        tar czvf ao-all-in-one-${{ steps.tag.outputs.version }}.tar.gz -C deploy .
+        tar czvf ao-all-in-one-${{ steps.tag.outputs.version }}.tar.gz -C deploy all-in-one-${{ steps.tag.outputs.version }}.yaml
 
     - name: Create simple description
       uses: ./.github/actions/changelog
