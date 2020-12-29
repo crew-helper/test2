@@ -36,14 +36,14 @@ jobs:
 
     - name: Commit file
       uses: ./.github/actions/put-contents
-      with:
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
 
     - name: Commit file
       uses: ./.github/actions/put-contents
-      with:
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one-${{ env.VERSION }}.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
@@ -53,5 +53,5 @@ jobs:
 
     - name: Create PR
       uses: ./.github/actions/crate-pr
-
-#TODO: create PR. deploy/all-in-one.yaml (trigger create branch: release/)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
