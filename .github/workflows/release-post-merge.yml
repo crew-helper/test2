@@ -13,23 +13,23 @@ jobs:
     env:
       MERGED: ${{ github.event.pull_request.merged }}
       BRANCH: ${{ github.event.pull_request.head.ref }}
-    if: (github.event.pull_request.merged == true) && (startsWith(github.event.pull_request.head.ref, 'release-'))
+    if: (env.MERGED == true) && (startsWith(env.BRANCH, 'release/'))
     runs-on: ubuntu-latest
     steps:
 
-    - name: Print Env
+    - name: Print Env and Get version
+      id: tag
       run: |
-        echo "MERGED:$MERGED"
         echo "BRANCH:$BRANCH"
+        version=$(echo $BRANCH | awk -F '/' '{print $2}')
+        tag="v${version}"
+        echo "::set-output name=version::$version"
+        echo "::set-output name=tag::$tag"
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
       with:
         fetch-depth: 0 #needs for tags
-
-    - name: Tag version
-      run: |
-        echo ${{ github.event.inputs.version }}
 
     # - name: Push Atlas Operator to Registry
     #   uses: docker/build-push-action@v1
@@ -44,44 +44,42 @@ jobs:
     #   uses: ./.github/actions/all-in-one
     #   with:
     #     IMAGE_URL: leori/atlas-ci:v4 #${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:${{ github.ref }}
-    #     version: ${{ github.event.inputs.version }}
+    #     version: ${{ steps.tag.outputs.version }}
 
     # - name: Tag and push
     #   uses: ./.github/actions/auto-push
     #   with:
-    #     version: ${{ github.event.inputs.version }}
+    #     version: ${{ steps.tag.outputs.version }}
 
-    # - name: Create configuration package
-    #   run: |
-    #     set -x
-    #     tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
+    - name: Create configuration package
+      run: |
+        set -x
+        tar czvf ao-all-in-one-${{ github.event.inputs.version }}.tar.gz -C deploy .
 
-    # - name: Create simple description
-    #   uses: ./.github/actions/changelog
-    #   with:
-    #     version: ${{ github.event.inputs.version }}
+    - name: Create simple description
+      uses: ./.github/actions/changelog
+      with:
+        version: ${{ steps.tag.outputs.version }}
 
-    # - name: Create Release
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     tag_name: v${{ github.event.inputs.version }}
-    #     release_name: Release ${{ github.event.inputs.version }}
-    #     body_path: changelog.txt
-    #     draft: true
-    #     prerelease: false
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.tag.outputs.tag }}
+        release_name: Release ${{ steps.tag.outputs.version }}
+        body_path: changelog.txt
+        draft: true
+        prerelease: false
 
-    # - name: Upload Release Asset
-    #   id: upload-release-asset
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-    #     asset_path: ./ao-all-in-one-${{ github.event.inputs.version }}.tar.gz
-    #     asset_name: ao-all-in-one-${{ github.event.inputs.version }}.tar.gz
-    #     asset_content_type: application/tgz
-
-#TODO: create PR deploy/all-in-one.yaml (trigger create branch: release/)
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: ./ao-all-in-one-${{ github.event.inputs.version }}.tar.gz
+        asset_name: ao-all-in-one-${{ github.event.inputs.version }}.tar.gz
+        asset_content_type: application/tgz

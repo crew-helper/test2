@@ -4,9 +4,6 @@ inputs:
   GITHUB_TOKEN:
     description: "Action token"
     required: true
-  FOLDER_TO_COMMIT:
-    description: "delete it"
-    required: true
   FILE_TO_COMMIT:
     description: "Target file which will be committed"
     required: true
