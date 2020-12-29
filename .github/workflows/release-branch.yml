@@ -31,7 +31,6 @@ jobs:
     - name: Create all-in-one configuration
       uses: ./.github/actions/all-in-one
       with:
-
         IMAGE_URL: leori/atlas-ci:v4 #${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:${{ env.VERSION }}
         version: ${{ env.VERSION }}
 

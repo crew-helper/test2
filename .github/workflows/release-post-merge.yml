@@ -4,8 +4,11 @@
 name: Release workflow
 
 on:
-  pull_request:
-    types: [closed]
+  # pull_request:
+  #   types: [closed]
+  push:
+    branches:
+      - main
 
 jobs:
   create-release:
@@ -13,7 +16,7 @@ jobs:
     env:
       MERGED: ${{ github.event.pull_request.merged }}
       BRANCH: ${{ github.event.pull_request.head.ref }}
-    if: (github.event.pull_request.merged == true) && (startsWith(github.event.pull_request.head.ref, 'release')) #TODO why can't i use env.MERGED?
+    if: startsWith(github.event.pull_request.head.ref, 'release') #TODO why can't i use env.MERGED?
     runs-on: ubuntu-latest
     steps:
 
