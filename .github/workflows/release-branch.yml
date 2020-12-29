@@ -47,6 +47,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one-${{ env.VERSION }}.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
+              #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     FILE_TO_COMMIT: ao-all-in-one-.tar.gz
+      #     DESTINATION_BRANCH: sign
 
     - name: Create PR
       uses: ./.github/actions/crate-pr
