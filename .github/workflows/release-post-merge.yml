@@ -11,6 +11,22 @@ on:
       - main
 
 jobs:
+  checkJ:
+    name: checkJ
+    env:
+      MERGED: ${{ github.event.pull_request.merged }}
+      # BRANCH: ${{ github.event.pull_request.head.ref }}
+      name: ${{ github.head_ref }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: check
+      id: tag
+      run: |
+        echo THIS IS MERGED: ${{ env.name }}
+        echo base_ref:${{ github.base_ref }}
+        echo ref:${{ github.ref }}
+        echo head_ref:${{ github.head_ref }}
+
   create-release:
     name: Create Release
     env:
