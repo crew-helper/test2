@@ -24,33 +24,30 @@ jobs:
       with:
         fetch-depth: 0 #needs for tags
 
-    - name: Create branch
-      run: |
-        git checkout -b "release/${VERSION}"
-        git push origin "release/${VERSION}"
-
     - name: Create all-in-one configuration
       uses: ./.github/actions/all-in-one
       with:
         IMAGE_URL: leori/atlas-ci:v4 #${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:${{ env.VERSION }}
         version: ${{ env.VERSION }}
 
-    - name: Commit file
+    - name: Create branch and push it
+      run: |
+        git checkout -b "release/${VERSION}"
+        git push origin "release/${VERSION}"
+
+    - name: Commit file'n'sign
       uses: ./.github/actions/put-contents
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
 
-    - name: Commit file
+    - name: Commit file'n'sign
       uses: ./.github/actions/put-contents
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one-${{ env.VERSION }}.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
-              #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     FILE_TO_COMMIT: ao-all-in-one-.tar.gz
-      #     DESTINATION_BRANCH: sign
 
     - name: Create PR
       uses: ./.github/actions/crate-pr
