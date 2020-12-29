@@ -37,12 +37,14 @@ jobs:
     - name: Commit file
       uses: ./.github/actions/put-contents
       with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
 
     - name: Commit file
       uses: ./.github/actions/put-contents
       with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one-${{ env.VERSION }}.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
 
