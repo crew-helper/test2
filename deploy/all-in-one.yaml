@@ -515,7 +515,7 @@ spec:
         - --enable-leader-election
         command:
         - /manager
-        image: leori/atlas-ci:v4
+        image: /:0.0.3
         imagePullPolicy: Always
         name: manager
         resources:
