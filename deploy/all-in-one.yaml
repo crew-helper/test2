@@ -515,7 +515,7 @@ spec:
         - --enable-leader-election
         command:
         - /manager
-        image: /:0.0.3
+        image: docker.io/test2:0.0.4
         imagePullPolicy: Always
         name: manager
         resources:
