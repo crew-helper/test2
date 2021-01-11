@@ -5,6 +5,8 @@ name: Manual workflow
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
+  schedule:
+    - cron:  '0/5 * * * *'
   create:
     tags:
       - 'v*'
@@ -32,6 +34,7 @@ jobs:
       - name: nes1
         run: |
           echo nes1
+          echo
 
   nes2:
     runs-on: ubuntu-latest
@@ -56,49 +59,49 @@ jobs:
       #   run: |
       #     echo ${{ steps.Changelog.outputs.changelog }}
 
-  greet:
-    # The type of runner that the job will run on
-    needs: [nes1, nes2]
-    if: ${{ true == false }} 
-    runs-on: ubuntu-latest
+  # greet:
+  #   # The type of runner that the job will run on
+  #   needs: [nes1, nes2]
+  #   if: ${{ true == false }}
+  #   runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-    # Runs a single command using the runners shell
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-      with:
-        persist-credentials: true
-        fetch-depth: 0
+  #   # Steps represent a sequence of tasks that will be executed as part of the job
+  #   steps:
+  #   # Runs a single command using the runners shell
+  #   - name: Check out code into the Go module directory
+  #     uses: actions/checkout@v2
+  #     with:
+  #       persist-credentials: true
+  #       fetch-depth: 0
 
-    - name: Send greeting
-      run: |
+  #   - name: Send greeting
+  #     run: |
 
-        echo ${{ secrets.GITHUB_TOKEN }}
-        echo ${{ secrets.GITHUB_TOKEN }}
+  #       echo ${{ secrets.GITHUB_TOKEN }}
+  #       echo ${{ secrets.GITHUB_TOKEN }}
 
-        echo "GITHUB_REF=${GITHUB_REF}"
-        echo base_ref:${{ github.base_ref }}
-        echo ref:${{ github.ref }}
-        echo head_ref:${{ github.head_ref }}
-        echo ${{ github.token }}
-        date >> test.1
-        ls
+  #       echo "GITHUB_REF=${GITHUB_REF}"
+  #       echo base_ref:${{ github.base_ref }}
+  #       echo ref:${{ github.ref }}
+  #       echo head_ref:${{ github.head_ref }}
+  #       echo ${{ github.token }}
+  #       date >> test.1
+  #       ls
 
-        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git checkout -b "v2" #version tag
-        git add test.*
-        git status
-        git commit -m "Commit stuff"
-        git push origin v2 --force #
+  #       git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+  #       git config --local user.name "github-actions[bot]"
+  #       git checkout -b "v2" #version tag
+  #       git add test.*
+  #       git status
+  #       git commit -m "Commit stuff"
+  #       git push origin v2 --force #
 
-    - name: pull-request-action
-      uses: vsoch/pull-request-action@1.0.12
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PULL_REQUEST_FROM_BRANCH: "v2"
-        PULL_REQUEST_BRANCH: "main"
+    # - name: pull-request-action
+    #   uses: vsoch/pull-request-action@1.0.12
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #     PULL_REQUEST_FROM_BRANCH: "v2"
+    #     PULL_REQUEST_BRANCH: "main"
     # - name: Push changes
     #   uses: ad-m/github-push-action@master
     #   with:
