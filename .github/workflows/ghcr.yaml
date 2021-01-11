@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Different tests
+name: Different tests2
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
@@ -10,11 +10,11 @@ on:
   # create:
   #   tags:
   #     - 'v*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "test"
-        required: true
+  # workflow_dispatch:
+  #   inputs:
+  #     tag:
+  #       description: "test"
+  #       required: true
   #   # Inputs the workflow accepts.
   #   inputs:
   #     name:
