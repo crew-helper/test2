@@ -1,15 +1,15 @@
 # This is a basic workflow that is manually triggered
 
-name: Manual workflow
+name: Different tests
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
   schedule:
-    - cron:  '0/5 * * * *'
-  create:
-    tags:
-      - 'v*'
+    - cron: '*/2 * * * *'
+  # create:
+  #   tags:
+  #     - 'v*'
   workflow_dispatch:
     inputs:
       tag:
