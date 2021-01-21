@@ -3,8 +3,8 @@
 name: Unit test
 
 on:
-  push:
-    branches:
+  # push:
+  #   branches:
   workflow_dispatch:
 
 jobs:
@@ -55,4 +55,3 @@ jobs:
       - run: go version
       - name: Run testing
         run: CGO_ENABLED=0 go test -v $(go list ./pkg/...)
-
