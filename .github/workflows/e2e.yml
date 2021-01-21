@@ -36,8 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # k8s: ["1.17-kind", "1.17-aws", "1.17-opeshift"] # <version>-<platform>
-        k8s: ["1.17-kind"] # <version>-<platform>
+        k8s: ["1.17-kind", "1.17-aws", "1.17-opeshift"] # <version>-<platform>
+        # k8s: ["1.17-kind"] # <version>-<platform>
         test: ["Deploy simple cluster"] # TODO refactor
     steps:
 
