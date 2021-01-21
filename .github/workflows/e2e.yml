@@ -35,6 +35,7 @@ jobs:
     needs: prepare-e2e
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         k8s: ["1.17-kind", "1.19-kind", "1.17-opeshift"] # <version>-<platform>
         # k8s: ["1.17-kind"] # <version>-<platform>
@@ -63,10 +64,18 @@ jobs:
       with:
         # version: ${{ steps.properties.outputs.k8s_version }}
         cluster_name: ${{ matrix.k8s }}
+        
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.15.6'
 
     - name: Run e2e test
       if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
       run: |
         #TODO remove -v?
         kubectl version
+        go version
+        go get github.com/onsi/ginkgo/ginkgo && \
+        go get github.com/onsi/gomega/...
         ginkgo -v ./test/e2e -x -focus ${{ matrix.test }}
