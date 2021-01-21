@@ -71,6 +71,4 @@ jobs:
       run: |
         #TODO remove -v?
         kubectl version
-        ginkgo -v ./test/e2e -x -focus "$INPUT_TEST"
-      with:
-        test: ${{ matrix.test }}
+        ginkgo -v ./test/e2e -x -focus ${{ matrix.test }}
