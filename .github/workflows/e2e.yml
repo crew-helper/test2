@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        k8s: ["1.17-kind", "1.17-aws", "1.17-opeshift"] # <version>-<platform>
+        k8s: ["1.17-kind", "1.19-kind", "1.17-opeshift"] # <version>-<platform>
         # k8s: ["1.17-kind"] # <version>-<platform>
         test: ["Deploy simple cluster"] # TODO refactor
     steps:
@@ -51,13 +51,10 @@ jobs:
     - name: Set properties
       id: properties
       run: |
-        # version=$(echo $INPUT_K8S | awk -F "-" '{print $1}')
         version=$(echo ${{ matrix.k8s }} | awk -F "-" '{print $1}')
         platform=$(echo ${{ matrix.k8s }} | awk -F "-" '{print $2}')
         echo "::set-output name=k8s_version::$version"
         echo "::set-output name=k8s_platform::$platform"
-      # with:
-      #   K8S: ${{ matrix.k8s }}
 
     # run if platform = kind #TODO
     - name: Create k8s Kind Cluster
@@ -68,6 +65,7 @@ jobs:
         cluster_name: ${{ matrix.k8s }}
 
     - name: Run e2e test
+      if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
       run: |
         #TODO remove -v?
         kubectl version
