@@ -1,8 +1,12 @@
 #!/bin/sh
 #commit file to the destination branch
+#TEST
+cat .git/config
+git checkout -b "release/0.0.1"
+git push origin "release/0.0.1"
 
 MESSAGE="generated $FILE_TO_COMMIT"
-SHA=$(git rev-parse "$DESTINATION_BRANCH:$FILE_TO_COMMIT")
+SHA=$(git rev-parse "$DESTINATION_BRANCH:$FILE_TO_COMMIT" || true)
 CONTENT=$(base64 "$FILE_TO_COMMIT")
 echo "$DESTINATION_BRANCH:$FILE_TO_COMMIT:$SHA"
 
