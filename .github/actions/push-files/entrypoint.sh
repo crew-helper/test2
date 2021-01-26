@@ -2,7 +2,8 @@
 #commit file to the destination branch
 
 MESSAGE="generated $FILE_TO_COMMIT"
-SHA=$(git rev-parse "$DESTINATION_BRANCH:$FILE_TO_COMMIT" || true)
+# SHA=$(git rev-parse "$DESTINATION_BRANCH:$FILE_TO_COMMIT" || true)
+SHA=$(git rev-parse "$DESTINATION_BRANCH:$FILE_TO_COMMIT")
 CONTENT=$(base64 "$FILE_TO_COMMIT")
 echo "$DESTINATION_BRANCH:$FILE_TO_COMMIT:$SHA"
 
