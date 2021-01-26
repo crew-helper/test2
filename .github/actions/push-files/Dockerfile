@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends git wget
 RUN mkdir ghcli && cd ghcli && \
     wget https://github.com/cli/cli/releases/download/v1.0.0/gh_1.0.0_linux_386.tar.gz -O ghcli.tar.gz --no-check-certificate  && \
-    tar --strip-components=1 -xf ghcli.tar.gz
+    tar --strip-components=1 -xf ghcli.tar.gz -C /usr/local
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.sh /home/entrypoint.sh
