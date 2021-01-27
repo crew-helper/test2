@@ -38,13 +38,14 @@ jobs:
     - name: Commit file and sign it
       uses: ./.github/actions/push-files
       env:
-        GITHUB_TOKEN: ${{ secrets.PAS }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILE_TO_COMMIT: "deploy/all-in-one.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
 
     - name: Create PR
       uses: ./.github/actions/create-pr
       env:
-        GITHUB_TOKEN: ${{ secrets.PAS }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
         reviewers: leo-ri
         signoff: true
