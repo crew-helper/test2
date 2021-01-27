@@ -28,7 +28,6 @@ jobs:
       uses: ./.github/actions/gen-install-scripts
       with:
         IMAGE_URL: ${{ secrets.DOCKER_RELEASE_REPO }}:${{ env.VERSION }}
-        version: ${{ env.VERSION }}
 
     - name: Create branch and push it
       run: |
@@ -47,5 +46,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        reviewers: leo-ri
-        signoff: true
+        REVIEWERS: leo-ri
