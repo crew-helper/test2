@@ -43,7 +43,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: ${{ secrets.DOCKER_RELEASE_REPO }}
         registry: ${{ secrets.DOCKER_REGISTRY }}
-        tags: ${{ steps.tag.outputs.tag }}
+        tags: ${{ steps.tag.outputs.version }}
 
     - name: Create simple description
       uses: ./.github/actions/changelog
@@ -57,7 +57,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.tag }}
-        release_name: Release ${{ steps.tag.outputs.version }}
+        release_name: ${{ steps.tag.outputs.tag }}
         body_path: changelog.md
         draft: true
         prerelease: false
