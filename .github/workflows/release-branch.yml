@@ -1,7 +1,7 @@
 # Create release branch
 # TODO after GitHub add permission for action-bot to commit to the protected branches - please merge release-* workflow into one
 
-name: Create release branch
+name: Create release branch2
 
 on:
   workflow_dispatch:
@@ -38,13 +38,13 @@ jobs:
     - name: Commit file and sign it
       uses: ./.github/actions/push-files
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAS }}
         FILE_TO_COMMIT: "deploy/all-in-one.yaml"
         DESTINATION_BRANCH: "release/${{ env.VERSION }}"
 
     - name: Create PR
       uses: ./.github/actions/create-pr
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAS }}
         reviewers: leo-ri
         signoff: true
