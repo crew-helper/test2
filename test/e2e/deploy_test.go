@@ -52,13 +52,13 @@ var _ = Describe("Deploy simple cluster", func() {
 		By("Create Sample Project\n")
 		session = cli.Execute("kubectl", "apply", "-f", ProjectSample, "-n", namespaceUserResources)
 		// Eventually(session).Should(Say("my-project created"))
-		Eventually(session).Should(Say("atlasproject.atlas.mongodb.com/my-project"))
+		Eventually(session.Wait()).Should(Say("atlasproject.atlas.mongodb.com/my-project"))
 
 		By("Sample Cluster\n")
 		session = cli.Execute("kubectl", "apply", "-f", ClusterSample, "-n", namespaceUserResources)
 		// session = cli.Execute("kubectl", "apply", "-f", ClusterSample)
 		// Eventually(session).Should(Say("atlascluster-sample created"))
-		Eventually(session).Should(Say("atlascluster-sample"))
+		Eventually(session.Wait()).Should(Say("atlascluster-sample"))
 
 		By("Wait creating and check that it was created")
 		session = cli.Execute("mongocli", "--version")
@@ -95,7 +95,7 @@ var _ = Describe("Deploy simple cluster", func() {
 		By("Update cluster\n")
 		session = cli.Execute("kubectl", "apply", "-f", "data/updated_atlascluster_basic.yaml", "-n", namespaceUserResources) //TODO param
 		// Eventually(session).Should(Say("atlascluster-sample configured"))
-		Eventually(session).Should(Say("atlascluster-sample"))
+		Eventually(session.Wait()).Should(Say("atlascluster-sample"))
 
 		By("Wait creation")
 		userClusterConfig = cli.LoadUserClusterConfig("data/updated_atlascluster_basic.yaml")
