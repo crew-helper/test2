@@ -2,26 +2,21 @@ package e2e_test
 
 import (
 	"os"
-	// "os/exec"
+	"testing"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	// "github.com/onsi/gomega/gexec"
-	// . "github.com/onsi/gomega/gbytes"
-
-	"testing"
 )
 
 const(
+	//TODO data provider?
 	ConfigAll = "../../deploy/all-in-one.yaml" 	// basic configuration (release)
 	ProjectSample = "data/atlasproject.yaml"
 	ClusterSample = "data/atlascluster_basic.yaml"
-	//TODO const from CI/CD matrix
-
 )
 var(
+	//default
 	Platform = "kind"
-	K8sVersion = "1.17"
-	TestName = "" //TODO not sure about it
+	K8sVersion = "v1.17.17"
 )
 
 func TestE2e(t *testing.T) {
@@ -30,21 +25,8 @@ func TestE2e(t *testing.T) {
 	RunSpecs(t, "E2e Suite")
 }
 
-// not sure
+//setUpMongoCLI initial setup
 func setUpMongoCLI() {
-	// TODO
-	Platform = os.Getenv("Platform")
-	K8sVersion = os.Getenv("")"1.17"
-
-	os.Setenv("MCLI_PUBLIC_API_KEY", "DJPQJCNN")
-	os.Setenv("MCLI_PRIVATE_API_KEY", "864c88bc-531a-46af-bebd-f3d6637bab37")
-	os.Setenv("MCLI_ORG_ID", "5ffdac0657666b4b84836fd4")
-	os.Setenv("MCLI_OPS_MANAGER_URL", "https://cloud-qa.mongodb.com/")
-
-
-	// TODO: change secrets
-	os.Setenv("MCLI_PUBLIC_API_KEY", "DJPQJCNN")
-	os.Setenv("MCLI_PRIVATE_API_KEY", "864c88bc-531a-46af-bebd-f3d6637bab37")
-	os.Setenv("MCLI_ORG_ID", "5ffdac0657666b4b84836fd4")
-	os.Setenv("MCLI_OPS_MANAGER_URL", "https://cloud-qa.mongodb.com/")
+	Platform = os.Getenv("K8s_PLATFORM")
+	K8sVersion = os.Getenv("K8s_VERSION")
 }

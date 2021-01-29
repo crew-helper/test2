@@ -38,7 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         # k8s: ["1.17-kind", "1.19-kind", "1.17-opeshift"] # <version>-<platform>
-        k8s: ["1.18-kind"] # <version>-<platform>
+        k8s: ["v1.18.15-kind"] # <K8sGitVersion>-<Platform>
         test: ["all-in-one"] # TODO refactor
     steps:
 
@@ -62,7 +62,7 @@ jobs:
       if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
       uses: helm/kind-action@v1.1.0
       with:
-        # version: ${{ steps.properties.outputs.k8s_version }}
+        node_image: kindest/node:${{ steps.properties.outputs.k8s_version }}
         cluster_name: ${{ matrix.k8s }}
 
     - name: Setup Go

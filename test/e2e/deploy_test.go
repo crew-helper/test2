@@ -21,9 +21,6 @@ import (
 var _ = Describe("Deploy simple cluster", func() {
 
 	It("Release sample all-in-one.yaml should work", func() {
-		By("test")
-		Eventually(t44(), "20m", "1s").Should(Equal(4))
-
 		By("Prepare namespaces")
 		// namespaceUserResources := uuid.NewRandom().String() //TODO for another tests
 		namespaceUserResources := "testdata"
@@ -36,8 +33,7 @@ var _ = Describe("Deploy simple cluster", func() {
 
 		By("Check Kubernetes version\n")
 		session = cli.Execute("kubectl", "version")
-		version := cli.GenKubeVersion(K8sVersion)
-		Eventually(session).Should(Say(version))
+		Eventually(session).Should(Say(K8sVersion))
 
 		By("Apply All-in-one configuration\n in ")
 		session = cli.Execute("kubectl", "apply", "-f", ConfigAll)

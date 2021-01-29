@@ -107,9 +107,3 @@ func GetClusterStatus(projectID string, clusterName string) func() string {
 		return result.StateName
 	}
 }
-
-//TODO move
-func GenKubeVersion(fullVersion string) string {
-	version := strings.Split(fullVersion, ".")
-	return fmt.Sprintf("Major:\"%s\", Minor:\"%s\"", version[0], version[1])
-}
