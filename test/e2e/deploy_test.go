@@ -1,8 +1,6 @@
 package e2e_test
 
 import (
-
-
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -11,9 +9,7 @@ import (
 
 	. "github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	// "github.com/onsi/ginkgo/config"
 	cli "github.com/mongodb/mongodb-atlas-kubernetes/test/e2e/utils"
-	// "go.mongodb.org/atlas/mongodbatlas"
 )
 
 
@@ -21,8 +17,7 @@ var _ = Describe("Deploy simple cluster", func() {
 
 	It("Release sample all-in-one.yaml should work", func() {
 		By("Prepare namespaces")
-		namespaceUserResources := uuid.NewRandom().String() //TODO for another tests
-		// namespaceUserResources := "testdata"
+		namespaceUserResources := uuid.NewRandom().String() //TODO
 		namespaceOperator := "mongodb-atlas-kubernetes-system"
 		session := cli.Execute("kubectl", "create", "namespace", namespaceUserResources)
 		Expect(session).ShouldNot(Say("created"))
@@ -33,7 +28,7 @@ var _ = Describe("Deploy simple cluster", func() {
 		session = cli.Execute("kubectl", "version")
 		Eventually(session).Should(Say(K8sVersion))
 		session = cli.Execute("mongocli", "--version")
-		Eventually(session).Should(gexec.Exit(0)) //TODO exit status
+		Eventually(session).Should(gexec.Exit(0))
 
 		By("Apply All-in-one configuration\n in ")
 		session = cli.Execute("kubectl", "apply", "-f", ConfigAll)
@@ -46,8 +41,7 @@ var _ = Describe("Deploy simple cluster", func() {
 			"--from-literal=privateApiKey=" + os.Getenv("MCLI_PRIVATE_API_KEY"),
 			"-n", namespaceUserResources,
 		)
-		// Eventually(session).Should(Say("my-atlas-key created"))
-		// Eventually(session).Should(Say("my-atlas-key"))
+		Eventually(session.Wait()).Should(Say("my-atlas-key created"))
 
 		By("Create Sample Project\n")
 		session = cli.Execute("kubectl", "apply", "-f", ProjectSample, "-n", namespaceUserResources)
@@ -56,9 +50,7 @@ var _ = Describe("Deploy simple cluster", func() {
 
 		By("Sample Cluster\n")
 		session = cli.Execute("kubectl", "apply", "-f", ClusterSample, "-n", namespaceUserResources)
-		// session = cli.Execute("kubectl", "apply", "-f", ClusterSample)
-		// Eventually(session).Should(Say("atlascluster-sample created"))
-		Eventually(session.Wait()).Should(Say("atlascluster-sample"))
+		Eventually(session.Wait()).Should(Say("atlascluster-sample created"))
 
 		By("Wait creating and check that it was created")
 		projectID := cli.GetProjectID(userProjectConfig.Spec.Name)
@@ -74,12 +66,6 @@ var _ = Describe("Deploy simple cluster", func() {
 			"35m", "1m",
 		).Should(Equal("IDLE"))
 
-		// cli.WaitCluster(
-		// 	projectID,
-		// 	userClusterConfig.Spec.Name,
-		// 	"IDLE",
-		// ) //TODO UPDATING?
-
 		By("check cluster Attribute") //TODO ...
 		cluster := cli.GetClustersInfo(projectID, userClusterConfig.Spec.Name)
 		Expect(
@@ -94,8 +80,7 @@ var _ = Describe("Deploy simple cluster", func() {
 
 		By("Update cluster\n")
 		session = cli.Execute("kubectl", "apply", "-f", "data/updated_atlascluster_basic.yaml", "-n", namespaceUserResources) //TODO param
-		// Eventually(session).Should(Say("atlascluster-sample configured"))
-		Eventually(session.Wait()).Should(Say("atlascluster-sample"))
+		Eventually(session.Wait()).Should(Say("atlascluster-sample configured"))
 
 		By("Wait creation")
 		userClusterConfig = cli.LoadUserClusterConfig("data/updated_atlascluster_basic.yaml")
