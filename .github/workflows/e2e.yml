@@ -73,8 +73,8 @@ jobs:
 
     - name: Install MongoCLI
       run: |
-        apt-get update
-        apt-get install -y mongocli
+        sudo apt-get update
+        sudo apt-get install -y mongocli
         mongocli --version
 
     - name: Run e2e test
@@ -90,7 +90,7 @@ jobs:
       run: |
         #TODO remove -v?
         kubectl version
-        
+
         go version
         go get github.com/onsi/ginkgo/ginkgo && \
         go get github.com/onsi/gomega/...
