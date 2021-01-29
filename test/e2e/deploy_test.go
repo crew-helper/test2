@@ -62,7 +62,7 @@ var _ = Describe("Deploy simple cluster", func() {
 		).Should(Equal("Running"))
 
 		Eventually(
-			cli.IsClusterExist(projectID, userClusterConfig.Spec.Name)
+			cli.IsClusterExist(projectID, userClusterConfig.Spec.Name),
 			"5m", "1s",
 		).Should(BeTrue())
 
