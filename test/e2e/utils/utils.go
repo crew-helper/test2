@@ -6,30 +6,46 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"time"
+	// "time"
 
 	"gopkg.in/yaml.v2"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
 )
 
-// Poll will run f every 10 seconds until it returns true or the timout is reached.
-func Poll(timeoutMinutes int, f func() (bool, error)) error {
-	pollInterval := 10
+// // Poll will run f every 10 seconds until it returns true or the timout is reached.
+// func Poll(timeoutMinutes int, f func() (bool, error)) error {
+// 	pollInterval := 10
 
-	for i := 0; i < timeoutMinutes*60; i++ {
-		res, err := f()
-		if err != nil {
-			return err
-		}
+// 	for i := 0; i < timeoutMinutes*60; i++ {
+// 		res, err := f()
+// 		if err != nil {
+// 			return err
+// 		}
 
-		if res {
-			return nil
-		}
+// 		if res {
+// 			return nil
+// 		}
 
-		i += pollInterval
-		time.Sleep(time.Duration(pollInterval) * time.Second)
-	}
+// 		i += pollInterval
+// 		time.Sleep(time.Duration(pollInterval) * time.Second)
+// 	}
 
-	return fmt.Errorf("timeout while polling (waited %d minutes)", timeoutMinutes)
+// 	return fmt.Errorf("timeout while polling (waited %d minutes)", timeoutMinutes)
+// }
+
+
+//LoadUserProjectConfig load configuration into object
+func LoadUserProjectConfig(path string) *v1.AtlasProject {
+	var config v1.AtlasProject
+	ReadInYAMLFileAndConvert(path, &config)
+	return &config
+}
+
+//LoadUserClusterConfig load configuration into object
+func LoadUserClusterConfig(path string) *v1.AtlasCluster {
+	var config v1.AtlasCluster
+	ReadInYAMLFileAndConvert(path, &config)
+	return &config
 }
 
 // GetEnvOrPanic will get an environment variable, panicking if it does not exist.
@@ -38,12 +54,11 @@ func GetEnvOrPanic(name string) string {
 	if !exists {
 		panic(fmt.Sprintf(`Could not find environment variable "%s"`, name))
 	}
-
 	return value
 }
 
 // ReadInYAMLFileAndConvert reads in the yaml file given by the path given
-func ReadInYAMLFileAndConvert(pathToYamlFile string, crd interface{}) interface{} {
+func ReadInYAMLFileAndConvert(pathToYamlFile string, cnfg interface{}) interface{} {
 	// Read in the yaml file at the path given
 	yamlFile, err := ioutil.ReadFile(pathToYamlFile)
 	if err != nil {
@@ -65,11 +80,11 @@ func ReadInYAMLFileAndConvert(pathToYamlFile string, crd interface{}) interface{
 		panic(err)
 	}
 
-	if err := json.Unmarshal(jsonFormat, &crd); err != nil {
+	if err := json.Unmarshal(jsonFormat, &cnfg); err != nil {
 		panic(err)
 	}
 
-	return crd
+	return cnfg
 }
 
 // ConvertYAMLtoJSONHelper converts the yaml to json recursively

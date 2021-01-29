@@ -1,124 +1,139 @@
 package e2e_test
 
 import (
-	// "fmt"
-	// "context"
 	"fmt"
-	// "reflect"
-	// "os"
-	"os/exec"
+	"time"
 
-	// "runtime"
-	// "time"
-	"strings"
-
+	"os"
+	"math/rand"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	// "github.com/pborman/uuid"
 
-	// . "github.com/onsi/gomega/gbytes"
+	. "github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	// "github.com/onsi/ginkgo/config"
-	// corev1 "k8s.io/api/core/v1"
-	// "k8s.io/apimachinery/pkg/api/errors"
-	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	// "k8s.io/client-go/kubernetes"
-	// "k8s.io/client-go/tools/clientcmd"
+	cli "github.com/mongodb/mongodb-atlas-kubernetes/test/e2e/utils"
+	// "go.mongodb.org/atlas/mongodbatlas"
 )
 
 
 var _ = Describe("Deploy simple cluster", func() {
 
-	It("Should deploy and update simple cluster", func() {
-		// namespace := "mongodb-atlas-kubernetes-system"//TODO autogen
+	It("Release sample all-in-one.yaml should work", func() {
+		By("test")
+		Eventually(t44(), "20m", "1s").Should(Equal(4))
 
-		// By("Check Kubernetes version\n")
-		// session := execute("kubectl", "version")
-		// version := genKubeVersion(k8sVersion)
-		// Eventually(session).Should(Say(version))
+		By("Prepare namespaces")
+		// namespaceUserResources := uuid.NewRandom().String() //TODO for another tests
+		namespaceUserResources := "testdata"
+		// namespaceUserResources := "mongodb-atlas-kubernetes-system"
+		// namespaceOperator := "mongodb-atlas-kubernetes-system"
+		session := cli.Execute("kubectl", "create", "namespace", namespaceUserResources)
+		Expect(session).ShouldNot(Say("created"))
+		userProjectConfig := cli.LoadUserProjectConfig("data/atlasproject.yaml")
+		userClusterConfig := cli.LoadUserClusterConfig("data/atlascluster_basic.yaml")
 
-		// By("Apply All-in-one configuration\n") //TODO why? move to beforeEach? do we need to do that?
-		// session = execute("kubectl", "apply", "-f", ConfigAll, "-n", namespace)
-		// Eventually(session).Should(Say("customresourcedefinition.apiextensions.k8s.io/atlasclusters.atlas.mongodb.com"))
+		By("Check Kubernetes version\n")
+		session = cli.Execute("kubectl", "version")
+		version := cli.GenKubeVersion(K8sVersion)
+		Eventually(session).Should(Say(version))
 
-		// By("Create secret")
-		// session = execute("kubectl", "create", "secret", "generic", "my-atlas-key",
-		// 	"--from-literal=orgId=" + os.Getenv("MCLI_ORG_ID"),
-		// 	"--from-literal=publicApiKey=" + os.Getenv("MCLI_PUBLIC_API_KEY"),
-		// 	"--from-literal=privateApiKey=" + os.Getenv("MCLI_PRIVATE_API_KEY"),
-		// 	"-n", namespace)
+		By("Apply All-in-one configuration\n in ")
+		session = cli.Execute("kubectl", "apply", "-f", ConfigAll)
+		Eventually(session.Wait()).Should(Say("customresourcedefinition.apiextensions.k8s.io/atlasclusters.atlas.mongodb.com"))
+
+		By("Create secret")
+		session = cli.Execute("kubectl", "create", "secret", "generic", "my-atlas-key",
+			"--from-literal=orgId=" + os.Getenv("MCLI_ORG_ID"),
+			"--from-literal=publicApiKey=" + os.Getenv("MCLI_PUBLIC_API_KEY"),
+			"--from-literal=privateApiKey=" + os.Getenv("MCLI_PRIVATE_API_KEY"),
+			"-n", namespaceUserResources,
+		)
 		// Eventually(session).Should(Say("my-atlas-key created"))
-		// // Eventually(session).Should(Say("my-atlas-key"))
+		// Eventually(session).Should(Say("my-atlas-key"))
 
-		// By("Sample Project\n")
-		// session = execute("kubectl", "apply", "-f", ProjectSample, "-n", namespace)
-		// // Eventually(session).Should(Say("my-project created"))
-		// Eventually(session).Should(Say("atlasproject.atlas.mongodb.com/my-project"))
+		By("Create Sample Project\n")
+		session = cli.Execute("kubectl", "apply", "-f", ProjectSample, "-n", namespaceUserResources)
+		// Eventually(session).Should(Say("my-project created"))
+		Eventually(session).Should(Say("atlasproject.atlas.mongodb.com/my-project"))
 
-		// By("Sample Cluster\n")
-		// session = execute("kubectl", "apply", "-f", ClusterSample, "-n", namespace)
-		// // Eventually(session).Should(Say("atlascluster-sample created"))
-		// Eventually(session).Should(Say("atlascluster-sample"))
+		By("Sample Cluster\n")
+		session = cli.Execute("kubectl", "apply", "-f", ClusterSample, "-n", namespaceUserResources)
+		// session = cli.Execute("kubectl", "apply", "-f", ClusterSample)
+		// Eventually(session).Should(Say("atlascluster-sample created"))
+		Eventually(session).Should(Say("atlascluster-sample"))
 
-		// By("Wait creating and check that it was created")
-		// session := execute("mongocli", "--version")
-		// Expect(session).ShouldNot(BeNil())
-		// Expect(os.Getenv("MCLI_OPS_MANAGER_URL")).Should(Equal("https://cloud-qa.mongodb.com/")) //TODO remove
+		By("Wait creating and check that it was created")
+		session = cli.Execute("mongocli", "--version")
+		Eventually(session).Should(gexec.Exit(0)) //TODO exit status
+		Expect(os.Getenv("MCLI_OPS_MANAGER_URL")).Should(Equal("https://cloud-qa.mongodb.com/")) //TODO remove
 
-		getProjectID := func() []byte{
-			session := execute("mongocli", "iam", "projects", "list", "-o", "go-template=\"{{ range .Results }}{{ if eq .Name \"Test Atlas Operator Project\"}}{{ .ID }}{{end}}{{end}}\"")
-			projectID := session.Out.Contents()
-			return projectID
-		}
+		Eventually(cli.GetProjectID(userProjectConfig.Spec.Name)).ShouldNot(BeNil())
+		projectID := cli.GetProjectID(userProjectConfig.Spec.Name)
+		GinkgoWriter.Write([]byte("projectID = " + projectID))
 
-		Eventually(getProjectID()).ShouldNot(BeNil())
-		// projectID = getProjectID()
-		// Eventually(session).Should(Say("60082b3e31fbe32df4d4470d")) //TODO param
+		Eventually(
+			cli.GetClusterStatus(projectID, userClusterConfig.Spec.Name),
+			"35m", "1m",
+		).Should(Equal("IDLE"))
 
-		By("check cluster name")
-		getClusterName := func() string {
-			session := execute("mongocli", "atlas", "clusters", "list", "--projectId", "60082b3e31fbe32df4d4470d", "-o", "go-template=\"{{ range . }}{{ .Name }} {{ end }}\"")
-			name := strings.TrimRight(string(session.Out.Contents()), " ")
-			GinkgoWriter([]byte(name))
-			return name
-		}
-		Eventually(getClusterName()).Should(BeEquivalentTo("cross44 "))
+		// cli.WaitCluster(
+		// 	projectID,
+		// 	userClusterConfig.Spec.Name,
+		// 	"IDLE",
+		// ) //TODO UPDATING?
 
-		// By("check provider settings")
-		// 	name: "cluster44"
-		//   instanceSizeName: M10 providerSettings.instanceSizeName
-		//   providerName: AWS providerSettings.providerName
-		//   regionName: US_EAST_1 providerSettings.regionName
+		By("check cluster Attribute") //TODO ...
+		cluster := cli.GetClustersInfo(projectID, userClusterConfig.Spec.Name)
+		Expect(
+			cluster.ProviderSettings.InstanceSizeName,
+		).Should(Equal(userClusterConfig.Spec.ProviderSettings.InstanceSizeName))
+		Expect(
+			cluster.ProviderSettings.ProviderName,
+		).Should(Equal(userClusterConfig.Spec.ProviderSettings.ProviderName))
+		Expect(
+			cluster.ProviderSettings.RegionName,
+		).Should(Equal(userClusterConfig.Spec.ProviderSettings.RegionName))
 
+		By("Update cluster\n")
+		session = cli.Execute("kubectl", "apply", "-f", "data/updated_atlascluster_basic.yaml", "-n", namespaceUserResources) //TODO param
+		// Eventually(session).Should(Say("atlascluster-sample configured"))
+		Eventually(session).Should(Say("atlascluster-sample"))
 
-		// projectID := "5fff1401869e8f54b7d5fd6c"
-		// command = exec.Command("mongocli", "iam", "projects", "ls")
-		// session, _ = gexec.Start(command, GinkgoWriter, GinkgoWriter)
-		// GinkgoWriter.Write(session.Buffer().Contents())
-		// Eventually(session).Should(Say("Test Atlas Operator Project")) //TODO param
-		// // Eventually(session)
+		By("Wait creation")
+		userClusterConfig = cli.LoadUserClusterConfig("data/updated_atlascluster_basic.yaml")
+		Expect(projectID).ShouldNot(BeNil())
+		Eventually(
+			cli.GetClusterStatus(projectID, userClusterConfig.Spec.Name),
+			"35m", "1m",
+		).Should(Equal("IDLE"))
 
+		uCluster := cli.GetClustersInfo(projectID, userClusterConfig.Spec.Name)
+		Expect(
+			uCluster.ProviderSettings.InstanceSizeName,
+		).Should(Equal(
+			userClusterConfig.Spec.ProviderSettings.InstanceSizeName,
+		))
 
-		// By("Update cluster\n")
-		// session = execute("kubectl", "apply", "-f", "data/updated_atlascluster_basic.yaml", "-n", namespace) //TODO param
-		// Eventually(session).Should(Say("customresourcedefinition.apiextensions.k8s.io/atlasclusters.atlas.mongodb.com"))
+		By("Delete cluster")
+		session = cli.Execute("kubectl", "delete", "-f", "data/updated_atlascluster_basic.yaml", "-n", namespaceUserResources)
+		Eventually(session.Wait("7m")).Should(gexec.Exit(0))
+		Eventually(
+			cli.IsClusterExist(projectID, userClusterConfig.Spec.Name),
+			"10m", "1m",
+		).Should(BeFalse())
 
-		// By("Check updated field")
-		// // session = execute("kubectl", )
-
-		// By("Delete")
-		// session = execute("kubectl", "delete", "projects", "list", "-o", "go-template=\"{{ range .Results }}{{ if eq .Name \"Test Atlas Operator Project\"}}{{ .ID }}{{end}}{{end}}\"")
-		// projectID := session.Out.Contents()
-		// Eventually(session).Should(Say("60082b3e31fbe32df4d4470d")) //TODO param
+		// By("Delete project") //TODO
 	})
 })
 
-func genKubeVersion(fullVersion string) string {
-	version := strings.Split(fullVersion, ".")
-	return fmt.Sprintf("Major:\"%s\", Minor:\"%s\"", version[0], version[1])
-}
+func t44() func() int {
+	return func() int {
+		rand.Seed(time.Now().UnixNano())
+		i := rand.Intn(5)
+		fmt.Println(i)
+		return i
+	}
 
-func execute(command string, args ...string) *gexec.Session {
-	cmd := exec.Command(command, args...)
-	session, _ := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-	return session
 }
