@@ -650,10 +650,10 @@ spec:
       - args:
         - --metrics-addr=127.0.0.1:8080
         - --enable-leader-election
-        - --atlas-domain=https://cloud.mongodb.com
+        - --atlas-domain=https://cloud-qa.mongodb.com
         command:
         - /manager
-        image: leori/test:main-870d08a
+        image: leori/test:main-89a252e
         imagePullPolicy: Always
         name: manager
         resources:
