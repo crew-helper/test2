@@ -1,14 +1,13 @@
 package e2e_test
 
 import (
-	"fmt"
-	"time"
+
 
 	"os"
-	"math/rand"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	// "github.com/pborman/uuid"
+	"github.com/pborman/uuid"
 
 	. "github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -22,10 +21,9 @@ var _ = Describe("Deploy simple cluster", func() {
 
 	It("Release sample all-in-one.yaml should work", func() {
 		By("Prepare namespaces")
-		// namespaceUserResources := uuid.NewRandom().String() //TODO for another tests
-		namespaceUserResources := "testdata"
-		// namespaceUserResources := "mongodb-atlas-kubernetes-system"
-		// namespaceOperator := "mongodb-atlas-kubernetes-system"
+		namespaceUserResources := uuid.NewRandom().String() //TODO for another tests
+		// namespaceUserResources := "testdata"
+		namespaceOperator := "mongodb-atlas-kubernetes-system"
 		session := cli.Execute("kubectl", "create", "namespace", namespaceUserResources)
 		Expect(session).ShouldNot(Say("created"))
 		userProjectConfig := cli.LoadUserProjectConfig("data/atlasproject.yaml")
@@ -67,9 +65,9 @@ var _ = Describe("Deploy simple cluster", func() {
 		Expect(projectID).ShouldNot(BeNil())
 		GinkgoWriter.Write([]byte("projectID = " + projectID))
 		Eventually(
-			cli.IsClusterExist(projectID, userProjectConfig.Spec.Name),
+			cli.GetPodStatus(namespaceOperator),
 			"5m", "3s",
-		).Should(BeTrue())
+		).Should(Equal("Running"))
 
 		Eventually(
 			cli.GetClusterStatus(projectID, userClusterConfig.Spec.Name),
@@ -125,13 +123,3 @@ var _ = Describe("Deploy simple cluster", func() {
 		// By("Delete project") //TODO
 	})
 })
-
-func t44() func() int {
-	return func() int {
-		rand.Seed(time.Now().UnixNano())
-		i := rand.Intn(5)
-		fmt.Println(i)
-		return i
-	}
-
-}
