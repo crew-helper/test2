@@ -102,6 +102,7 @@ func IsClusterExist(projectID string, name string) func() bool {
 		clusters := GetClusters(projectID)
 		// if clusters
 		for _, c := range clusters {
+			GinkgoWriter.Write([]byte(c.Name + name + "\n"))
 			if c.Name == name {
 				return true
 			}
