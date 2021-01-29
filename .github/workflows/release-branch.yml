@@ -1,7 +1,7 @@
 # Create release branch
 # TODO after GitHub add permission for action-bot to commit to the protected branches - please merge release-* workflow into one
 
-name: Create release branch2
+name: Create release branch
 
 on:
   workflow_dispatch:
@@ -46,4 +46,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        REVIEWERS: leo-ri
+        REVIEWERS: antonlisovenko,vasilevp,leo-ri

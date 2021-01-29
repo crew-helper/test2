@@ -31,9 +31,11 @@ var _ = Describe("Deploy simple cluster", func() {
 		userProjectConfig := cli.LoadUserProjectConfig("data/atlasproject.yaml")
 		userClusterConfig := cli.LoadUserClusterConfig("data/atlascluster_basic.yaml")
 
-		By("Check Kubernetes version\n")
+		By("Check Kubernetes/MongoCLI version\n")
 		session = cli.Execute("kubectl", "version")
 		Eventually(session).Should(Say(K8sVersion))
+		session = cli.Execute("mongocli", "--version")
+		Eventually(session).Should(gexec.Exit(0)) //TODO exit status
 
 		By("Apply All-in-one configuration\n in ")
 		session = cli.Execute("kubectl", "apply", "-f", ConfigAll)
@@ -61,13 +63,13 @@ var _ = Describe("Deploy simple cluster", func() {
 		Eventually(session.Wait()).Should(Say("atlascluster-sample"))
 
 		By("Wait creating and check that it was created")
-		session = cli.Execute("mongocli", "--version")
-		Eventually(session).Should(gexec.Exit(0)) //TODO exit status
-		Expect(os.Getenv("MCLI_OPS_MANAGER_URL")).Should(Equal("https://cloud-qa.mongodb.com/")) //TODO remove
-
-		Eventually(cli.GetProjectID(userProjectConfig.Spec.Name)).ShouldNot(BeNil())
 		projectID := cli.GetProjectID(userProjectConfig.Spec.Name)
+		Expect(projectID).ShouldNot(BeNil())
 		GinkgoWriter.Write([]byte("projectID = " + projectID))
+		Eventually(
+			cli.IsClusterExist(projectID, userProjectConfig.Spec.Name),
+			"5m", "3s",
+		).Should(BeTrue())
 
 		Eventually(
 			cli.GetClusterStatus(projectID, userClusterConfig.Spec.Name),
