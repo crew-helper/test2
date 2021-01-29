@@ -71,6 +71,12 @@ jobs:
       with:
         go-version: '1.15.6'
 
+    - name: Install MongoCLI
+      run: |
+        apt-get update
+        apt-get install -y mongocli
+        mongocli --version
+
     - name: Run e2e test
       if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
       env:
@@ -84,7 +90,7 @@ jobs:
       run: |
         #TODO remove -v?
         kubectl version
-
+        
         go version
         go get github.com/onsi/ginkgo/ginkgo && \
         go get github.com/onsi/gomega/...
