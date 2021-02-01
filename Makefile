@@ -140,5 +140,5 @@ stop-kind: ## Stop the local kind cluster
 	kind delete cluster
 
 .PHONY: log
-log: ## View manager logs
+log: ## View manager logss
 	kubectl logs deploy/mongodb-atlas-kubernetes-controller-manager manager -n mongodb-atlas-kubernetes-system -f
