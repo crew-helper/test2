@@ -1,7 +1,10 @@
 name: E2E test
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Unit test", "Integration Test"]
+    types:
+      - completed
 
 jobs:
   prepare-e2e:
