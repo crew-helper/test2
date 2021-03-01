@@ -42,6 +42,11 @@ const (
 	ClusterReadyType ConditionType = "ClusterReady"
 )
 
+// AtlasDatabaseUser condition types
+const (
+	DatabaseUserReadyType ConditionType = "DatabaseUserReady"
+)
+
 // Condition describes the state of an Atlas Custom Resource at a certain point.
 type Condition struct {
 	// Type of Atlas Custom Resource condition.
@@ -106,7 +111,7 @@ func (c Condition) WithReason(reason string) Condition {
 	return c
 }
 
-func (c Condition) WithMessage(msg string) Condition {
+func (c Condition) WithMessageRegexp(msg string) Condition {
 	c.Message = msg
 	return c
 }

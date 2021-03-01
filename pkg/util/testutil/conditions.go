@@ -1,9 +1,11 @@
 package testutil
 
 import (
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
+	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/types"
+
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
 )
 
 // MatchCondition returns the GomegaMatcher that checks if the 'actual' status.Condition matches the 'expected' one.
@@ -39,9 +41,8 @@ func (m *conditionMatcher) Match(actual interface{}) (success bool, err error) {
 	if m.ExpectedCondition.Type != "" && c.Type != m.ExpectedCondition.Type {
 		return false, nil
 	}
-	// Add regexp when necessary
-	if m.ExpectedCondition.Message != "" && c.Message != m.ExpectedCondition.Message {
-		return false, nil
+	if m.ExpectedCondition.Message != "" {
+		gomega.Expect(c.Message).To(gomega.MatchRegexp(m.ExpectedCondition.Message))
 	}
 
 	return true, nil

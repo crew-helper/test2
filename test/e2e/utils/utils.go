@@ -2,67 +2,54 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
+	"os"
+
 	"io/ioutil"
 	"log"
-	"os"
-	// "time"
+	"path/filepath"
 
-	"gopkg.in/yaml.v2"
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
+	yaml "gopkg.in/yaml.v3"
+
+	"github.com/pborman/uuid"
+
+	v1 "github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
 )
 
-// // Poll will run f every 10 seconds until it returns true or the timout is reached.
-// func Poll(timeoutMinutes int, f func() (bool, error)) error {
-// 	pollInterval := 10
-
-// 	for i := 0; i < timeoutMinutes*60; i++ {
-// 		res, err := f()
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if res {
-// 			return nil
-// 		}
-
-// 		i += pollInterval
-// 		time.Sleep(time.Duration(pollInterval) * time.Second)
-// 	}
-
-// 	return fmt.Errorf("timeout while polling (waited %d minutes)", timeoutMinutes)
-// }
-
-
-//LoadUserProjectConfig load configuration into object
+// LoadUserProjectConfig load configuration into object
 func LoadUserProjectConfig(path string) *v1.AtlasProject {
 	var config v1.AtlasProject
 	ReadInYAMLFileAndConvert(path, &config)
 	return &config
 }
 
-//LoadUserClusterConfig load configuration into object
-func LoadUserClusterConfig(path string) *v1.AtlasCluster {
-	var config v1.AtlasCluster
+// LoadUserClusterConfig load configuration into object
+func LoadUserClusterConfig(path string) AC {
+	var config AC
 	ReadInYAMLFileAndConvert(path, &config)
-	return &config
+	return config
 }
 
-// GetEnvOrPanic will get an environment variable, panicking if it does not exist.
-func GetEnvOrPanic(name string) string {
-	value, exists := os.LookupEnv(name)
-	if !exists {
-		panic(fmt.Sprintf(`Could not find environment variable "%s"`, name))
+func SaveToFile(path string, data []byte) {
+	ioutil.WriteFile(path, data, os.ModePerm)
+}
+
+func JSONToYAMLConvert(cnfg interface{}) []byte {
+	var jsonI interface{}
+	j, _ := json.Marshal(cnfg)
+	err := yaml.Unmarshal(j, &jsonI)
+	if err != nil {
+		return nil
 	}
-	return value
+	y, _ := yaml.Marshal(jsonI)
+	return y
 }
 
 // ReadInYAMLFileAndConvert reads in the yaml file given by the path given
 func ReadInYAMLFileAndConvert(pathToYamlFile string, cnfg interface{}) interface{} {
 	// Read in the yaml file at the path given
-	yamlFile, err := ioutil.ReadFile(pathToYamlFile)
+	yamlFile, err := ioutil.ReadFile(filepath.Clean(pathToYamlFile))
 	if err != nil {
-		log.Printf("Error while parsing YAML file %v, error: %s", pathToYamlFile, err)
+		log.Printf("Error while parsing YAML file %v, error: %s", filepath.Clean(pathToYamlFile), err)
 	}
 
 	// Map yamlFile to interface
@@ -103,4 +90,31 @@ func ConvertYAMLtoJSONHelper(i interface{}) interface{} {
 	}
 
 	return i
+}
+
+func GenUniqID() string {
+	return uuid.NewRandom().String()
+}
+
+// CreateCopyKustomizeNamespace create copy of `/deploy/namespaced` folder with kustomization file for overriding namespace
+func CreateCopyKustomizeNamespace(namespace string) {
+	fullPath := filepath.Join("data", namespace)
+	os.Mkdir(fullPath, os.ModePerm)
+	CopyFile("../../deploy/namespaced/crds.yaml", filepath.Join(fullPath, "crds.yaml"))
+	CopyFile("../../deploy/namespaced/namespaced-config.yaml", filepath.Join(fullPath, "namespaced-config.yaml"))
+	data := []byte(
+		"namespace: " + namespace + "\n" +
+			"resources:" + "\n" +
+			"- crds.yaml" + "\n" +
+			"- namespaced-config.yaml",
+	)
+	SaveToFile(filepath.Join(fullPath, "kustomization.yaml"), data)
+}
+
+func CopyFile(source, target string) {
+	data, _ := ioutil.ReadFile(filepath.Clean(source))
+	err := ioutil.WriteFile(target, data, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 }

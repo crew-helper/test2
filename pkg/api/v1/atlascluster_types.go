@@ -17,18 +17,34 @@ limitations under the License.
 package v1
 
 import (
-	"encoding/json"
-
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/kube"
 	"go.mongodb.org/atlas/mongodbatlas"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/compat"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/kube"
 )
 
 func init() {
 	SchemeBuilder.Register(&AtlasCluster{}, &AtlasClusterList{})
 }
+
+type ProviderName string
+type ClusterType string
+
+const (
+	ProviderAWS    ProviderName = "AWS"
+	ProviderGCP    ProviderName = "GCP"
+	ProviderAzure  ProviderName = "AZURE"
+	ProviderTenant ProviderName = "TENANT"
+)
+
+const (
+	TypeReplicaSet ClusterType = "REPLICASET"
+	TypeSharded    ClusterType = "SHARDED"
+	TypeGeoSharded ClusterType = "GEOSHARDED"
+)
 
 // AtlasClusterSpec defines the desired state of AtlasCluster
 type AtlasClusterSpec struct {
@@ -49,7 +65,7 @@ type AtlasClusterSpec struct {
 	// The parameter is required if replicationSpecs are set or if Global Clusters are deployed.
 	// +kubebuilder:validation:Enum=REPLICASET;SHARDED;GEOSHARDED
 	// +optional
-	ClusterType string `json:"clusterType,omitempty"`
+	ClusterType ClusterType `json:"clusterType,omitempty"`
 
 	// Capacity, in gigabytes, of the host's root volume.
 	// Increase this number to add capacity, up to a maximum possible value of 4096 (i.e., 4 TB).
@@ -71,8 +87,6 @@ type AtlasClusterSpec struct {
 	Labels []LabelSpec `json:"labels,omitempty"`
 
 	// Version of the cluster to deploy.
-	// +kubebuilder:validation:Enum="3.6";"4.0";"4.2";"4.4"
-	// +optional
 	MongoDBMajorVersion string `json:"mongoDBMajorVersion,omitempty"`
 
 	// Name of the cluster as it appears in Atlas. After Atlas creates the cluster, you can't change its name.
@@ -84,6 +98,9 @@ type AtlasClusterSpec struct {
 	// +kubebuilder:validation:Maximum=50
 	// +optional
 	NumShards *int `json:"numShards,omitempty"`
+
+	// Flag that indicates whether the cluster should be paused.
+	Paused *bool `json:"paused,omitempty"`
 
 	// Flag that indicates the cluster uses continuous cloud backups.
 	// +optional
@@ -104,6 +121,9 @@ type AtlasClusterSpec struct {
 
 // AutoScalingSpec configures your cluster to automatically scale its storage
 type AutoScalingSpec struct {
+	// Flag that indicates whether autopilot mode for Performance Advisor is enabled.
+	// The default is false.
+	AutoIndexingEnabled *bool `json:"autoIndexingEnabled,omitempty"`
 	// Flag that indicates whether disk auto-scaling is enabled. The default is true.
 	// +optional
 	DiskGBEnabled *bool `json:"diskGBEnabled,omitempty"`
@@ -175,7 +195,7 @@ type ProviderSettingsSpec struct {
 
 	// Cloud service provider on which Atlas provisions the hosts.
 	// +kubebuilder:validation:Enum=AWS;GCP;AZURE;TENANT
-	ProviderName string `json:"providerName"`
+	ProviderName ProviderName `json:"providerName"`
 
 	// Physical location of your MongoDB cluster.
 	// The region you choose can affect network latency for clients accessing your databases.
@@ -238,18 +258,9 @@ var _ = RegionsConfig(mongodbatlas.RegionsConfig{})
 
 // Cluster converts the Spec to native Atlas client format.
 func (spec *AtlasClusterSpec) Cluster() (*mongodbatlas.Cluster, error) {
-	result := mongodbatlas.Cluster{}
-	b, err := json.Marshal(spec)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(b, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
+	result := &mongodbatlas.Cluster{}
+	err := compat.JSONCopy(result, spec)
+	return result, err
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -291,4 +302,58 @@ func (c *AtlasCluster) UpdateStatus(conditions []status.Condition, options ...st
 		v := o.(status.AtlasClusterStatusOption)
 		v(&c.Status)
 	}
+}
+
+// ************************************ Builder methods *************************************************
+
+func NewCluster(namespace, name, nameInAtlas string) *AtlasCluster {
+	return &AtlasCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: AtlasClusterSpec{
+			Name:             nameInAtlas,
+			ProviderSettings: &ProviderSettingsSpec{InstanceSizeName: "M10"},
+		},
+	}
+}
+
+func (c *AtlasCluster) WithName(name string) *AtlasCluster {
+	c.Name = name
+	return c
+}
+
+func (c *AtlasCluster) WithAtlasName(name string) *AtlasCluster {
+	c.Spec.Name = name
+	return c
+}
+
+func (c *AtlasCluster) WithProjectName(projectName string) *AtlasCluster {
+	c.Spec.Project = ResourceRef{Name: projectName}
+	return c
+}
+
+func (c *AtlasCluster) WithProviderName(name ProviderName) *AtlasCluster {
+	c.Spec.ProviderSettings.ProviderName = name
+	return c
+}
+
+func (c *AtlasCluster) WithRegionName(name string) *AtlasCluster {
+	c.Spec.ProviderSettings.RegionName = name
+	return c
+}
+
+func DefaultGCPCluster(namespace, projectName string) *AtlasCluster {
+	return NewCluster(namespace, "test-cluster-gcp-k8s", "test-cluster-gcp").
+		WithProjectName(projectName).
+		WithProviderName(ProviderGCP).
+		WithRegionName("EASTERN_US")
+}
+
+func DefaultAWSCluster(namespace, projectName string) *AtlasCluster {
+	return NewCluster(namespace, "test-cluster-aws-k8s", "test-cluster-aws").
+		WithProjectName(projectName).
+		WithProviderName(ProviderAWS).
+		WithRegionName("US_WEST_2")
 }

@@ -17,10 +17,12 @@ limitations under the License.
 package v1
 
 import (
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/kube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/project"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/kube"
 )
 
 // Important:
@@ -50,7 +52,7 @@ type AtlasProjectSpec struct {
 	// ProjectIPAccessList allows to enable the IP Access List for the Project. See more information at
 	// https://docs.atlas.mongodb.com/reference/api/ip-access-list/add-entries-to-access-list/
 	// +optional
-	ProjectIPAccessList []ProjectIPAccessList `json:"projectIpAccessList,omitempty"`
+	ProjectIPAccessList []project.IPAccessList `json:"projectIpAccessList,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -77,22 +79,9 @@ type AtlasProjectList struct {
 	Items           []AtlasProject `json:"items"`
 }
 
-type ProjectIPAccessList struct {
-	// Unique identifier of AWS security group in this access list entry.
-	// +optional
-	AwsSecurityGroup string `json:"awsSecurityGroup,omitempty"`
-	// Range of IP addresses in CIDR notation in this access list entry.
-	// +optional
-	CIDRBlock string `json:"cidrBlock,omitempty"`
-	// Comment associated with this access list entry.
-	// +optional
-	Comment string `json:"comment,omitempty"`
-	// Timestamp in ISO 8601 date and time format in UTC after which Atlas deletes the temporary access list entry.
-	// +optional
-	DeleteAfterDate string `json:"deleteAfterDate,omitempty"`
-	// Entry using an IP address in this access list entry.
-	// +optional
-	IPAddress string `json:"ipAddress,omitempty"`
+// ID is just a shortcut for ID from the status
+func (p AtlasProject) ID() string {
+	return p.Status.ID
 }
 
 func (p *AtlasProject) ConnectionSecretObjectKey() *client.ObjectKey {
@@ -116,4 +105,47 @@ func (p *AtlasProject) UpdateStatus(conditions []status.Condition, options ...st
 		v := o.(status.AtlasProjectStatusOption)
 		v(&p.Status)
 	}
+}
+
+// ************************************ Builder methods *************************************************
+
+func NewProject(namespace, name, nameInAtlas string) *AtlasProject {
+	return &AtlasProject{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: AtlasProjectSpec{
+			Name: nameInAtlas,
+		},
+	}
+}
+
+func (p *AtlasProject) WithName(name string) *AtlasProject {
+	p.Name = name
+	return p
+}
+
+func (p *AtlasProject) WithAtlasName(name string) *AtlasProject {
+	p.Spec.Name = name
+	return p
+}
+
+func (p *AtlasProject) WithConnectionSecret(name string) *AtlasProject {
+	if name != "" {
+		p.Spec.ConnectionSecret = &ResourceRef{Name: name}
+	}
+	return p
+}
+
+func (p *AtlasProject) WithIPAccessList(ipAccess project.IPAccessList) *AtlasProject {
+	if p.Spec.ProjectIPAccessList == nil {
+		p.Spec.ProjectIPAccessList = []project.IPAccessList{}
+	}
+	p.Spec.ProjectIPAccessList = append(p.Spec.ProjectIPAccessList, ipAccess)
+	return p
+}
+
+func DefaultProject(namespace, connectionSecretName string) *AtlasProject {
+	return NewProject(namespace, "test-project", namespace).WithConnectionSecret(connectionSecretName)
 }

@@ -1,0 +1,13 @@
+apiVersion: atlas.mongodb.com/v1
+kind: AtlasCluster
+metadata:
+    creationTimestamp: null
+    name: atlascluster-basic
+spec:
+    name: cluster-basic
+    projectRef:
+        name: k-9a82fc45-3602-4e37-98e7-7f25a3b6ade5
+    providerSettings:
+        instanceSizeName: M10
+        providerName: AWS
+        regionName: US_EAST_1

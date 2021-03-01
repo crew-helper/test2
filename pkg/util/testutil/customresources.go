@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	mdbv1 "github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/kube"
 	"github.com/onsi/gomega"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	mdbv1 "github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1/status"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/kube"
 )
 
 // WaitFor waits until the AO Custom Resource reaches some state - this is configured by 'expectedCondition'.
@@ -21,7 +22,6 @@ func WaitFor(k8sClient client.Client, createdResource mdbv1.AtlasCustomResource,
 			return false
 		}
 		// Atlas Operator hasn't started working yet
-		fmt.Printf("Generation: %+v, observed Generation: %+v\n", createdResource.GetGeneration(), createdResource.GetStatus().GetObservedGeneration())
 		if createdResource.GetGeneration() != createdResource.GetStatus().GetObservedGeneration() {
 			return false
 		}

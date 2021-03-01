@@ -12,12 +12,21 @@ const (
 
 // Atlas Project reasons
 const (
-	ProjectNotCreatedInAtlas ConditionReason = "ProjectNotCreatedInAtlas"
+	ProjectNotCreatedInAtlas   ConditionReason = "ProjectNotCreatedInAtlas"
+	ProjectIPAccessInvalid     ConditionReason = "ProjectIPAccessListInvalid"
+	ProjectIPNotCreatedInAtlas ConditionReason = "ProjectIPAccessListNotCreatedInAtlas"
 )
 
 // Atlas Cluster reasons
 const (
 	ClusterNotCreatedInAtlas ConditionReason = "ClusterNotCreatedInAtlas"
+	ClusterNotUpdatedInAtlas ConditionReason = "ClusterNotUpdatedInAtlas"
 	ClusterCreating          ConditionReason = "ClusterCreating"
 	ClusterUpdating          ConditionReason = "ClusterUpdating"
+)
+
+// Atlas Database User reasons
+const (
+	DatabaseUserNotCreatedInAtlas ConditionReason = "DatabaseUserNotCreatedInAtlas"
+	DatabaseUserNotUpdatedInAtlas ConditionReason = "DatabaseUserNotUpdatedInAtlas"
 )

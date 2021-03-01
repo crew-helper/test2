@@ -1,0 +1,109 @@
+name: Test
+
+on:
+  push:
+    branches:
+  workflow_dispatch:
+
+jobs:
+  test1:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    env:
+      # uncomment the below for local testing
+      # DOCKER_REPO: ${{ env.DOCKER_REGISTRY }}/mongodb-atlas-kubernetes-operator
+      DOCKER_REPO: mongodb/mongodb-atlas-kubernetes-operator-prerelease
+    strategy:
+      fail-fast: false
+      matrix:
+        # k8s: ["1.17-kind", "1.19-kind", "1.17-opeshift"] # <supported platform version>-<platform>
+        k8s: ["v1.18.15-kind"] # <K8sGitVersion>-<Platform>
+        test: ["cluster-ns", "cluster-wide"] # TODO refactor
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2.3.1
+
+      - name: check matrix
+        env:
+          cluster_name: ${{ matrix.test }}
+        run: |
+          sleep 5
+          echo $cluster_name
+
+
+  # e2e:
+  #   name: E2E tests
+  #   needs: prepare-e2e
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     # uncomment the below for local testing
+  #     # DOCKER_REPO: ${{ env.DOCKER_REGISTRY }}/mongodb-atlas-kubernetes-operator
+  #     DOCKER_REPO: mongodb/mongodb-atlas-kubernetes-operator-prerelease
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       # k8s: ["1.17-kind", "1.19-kind", "1.17-opeshift"] # <supported platform version>-<platform>
+  #       k8s: ["v1.18.15-kind"] # <K8sGitVersion>-<Platform>
+  #       test: ["cluster-ns", "cluster-wide"] # TODO refactor
+  #   steps:
+
+  #   - name: Check out code
+  #     uses: actions/checkout@v2.3.1
+
+  #   - name: Prepare tag
+  #     id: prepare
+  #     uses: ./.github/actions/set-tag
+
+  #   - name: Generate configuration for the tests
+  #     uses: ./.github/actions/gen-install-scripts
+  #     with:
+  #       IMAGE_URL: ${{ env.DOCKER_REPO }}:${{ steps.prepare.outputs.tag }}
+  #       ENV: dev
+
+  #   - name: Set properties
+  #     id: properties
+  #     run: |
+  #       version=$(echo ${{ matrix.k8s }} | awk -F "-" '{print $1}')
+  #       platform=$(echo ${{ matrix.k8s }} | awk -F "-" '{print $2}')
+  #       echo "::set-output name=k8s_version::$version"
+  #       echo "::set-output name=k8s_platform::$platform"
+
+  #   # run if platform = kind #TODO
+  #   - name: Create k8s Kind Cluster
+  #     if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
+  #     uses: helm/kind-action@v1.1.0
+  #     with:
+  #       node_image: kindest/node:${{ steps.properties.outputs.k8s_version }}
+  #       cluster_name: ${{ matrix.test }}
+
+  #   - name: Setup Go
+  #     if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
+  #     uses: actions/setup-go@v2
+  #     with:
+  #       go-version: '1.15.6'
+
+  #   - name: Install MongoCLI
+  #     run: |
+  #       sudo apt-get update
+  #       sudo apt-get install -y mongocli
+  #       mongocli --version
+
+  #   - name: Run e2e test
+  #     if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
+  #     env:
+  #       MCLI_PUBLIC_API_KEY: ${{ secrets.ATLAS_PUBLIC_KEY }}
+  #       MCLI_PRIVATE_API_KEY: ${{ secrets.ATLAS_PRIVATE_KEY }}
+  #       MCLI_ORG_ID: ${{ secrets.ATLAS_ORG_ID}}
+  #       MCLI_OPS_MANAGER_URL: "https://cloud-qa.mongodb.com/"
+  #       K8S_PLATFORM: "${{ steps.properties.outputs.k8s_platform }}"
+  #       K8S_VERSION: "${{ steps.properties.outputs.k8s_version }}"
+  #       TEST_NAME: "${{ matrix.test }}"
+  #     run: |
+  #       kubectl version
+
+  #       go version
+  #       go get github.com/onsi/ginkgo/ginkgo && \
+  #       go get github.com/onsi/gomega/...
+  #       ginkgo --focus "${TEST_NAME}" -nodes=3 -x test/e2e/
+
+# TODO if int test failed - stop e2e, add job for cleanup Atlas projects/clusters

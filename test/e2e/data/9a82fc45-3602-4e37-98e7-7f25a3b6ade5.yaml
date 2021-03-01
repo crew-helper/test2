@@ -1,0 +1,9 @@
+apiVersion: atlas.mongodb.com/v1
+kind: AtlasProject
+metadata:
+    creationTimestamp: null
+    name: k-9a82fc45-3602-4e37-98e7-7f25a3b6ade5
+spec:
+    connectionSecretRef:
+        name: my-atlas-key
+    name: 9a82fc45-3602-4e37-98e7-7f25a3b6ade5

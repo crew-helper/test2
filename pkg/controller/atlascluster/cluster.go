@@ -2,28 +2,21 @@ package atlascluster
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	mdbv1 "github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/atlas"
-	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/workflow"
 	"go.mongodb.org/atlas/mongodbatlas"
 	"go.uber.org/zap"
+
+	mdbv1 "github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/workflow"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/compat"
 )
 
-func (r *AtlasClusterReconciler) ensureClusterState(log *zap.SugaredLogger, connection atlas.Connection, project *mdbv1.AtlasProject, cluster *mdbv1.AtlasCluster) (c *mongodbatlas.Cluster, _ workflow.Result) {
-	ctx := context.Background()
-
-	client, err := atlas.Client(r.AtlasDomain, connection, log)
-	if err != nil {
-		return c, workflow.Terminate(workflow.Internal, err.Error())
-	}
-
-	c, resp, err := client.Clusters.Get(ctx, project.Status.ID, cluster.Spec.Name)
+func (r *AtlasClusterReconciler) ensureClusterState(ctx *workflow.Context, project *mdbv1.AtlasProject, cluster *mdbv1.AtlasCluster) (c *mongodbatlas.Cluster, _ workflow.Result) {
+	c, resp, err := ctx.Client.Clusters.Get(context.Background(), project.Status.ID, cluster.Spec.Name)
 	if err != nil {
 		if resp == nil {
 			return c, workflow.Terminate(workflow.Internal, err.Error())
@@ -38,8 +31,8 @@ func (r *AtlasClusterReconciler) ensureClusterState(log *zap.SugaredLogger, conn
 			return c, workflow.Terminate(workflow.Internal, err.Error())
 		}
 
-		log.Infof("Cluster %s doesn't exist in Atlas - creating", cluster.Spec.Name)
-		c, _, err = client.Clusters.Create(ctx, project.Status.ID, c)
+		ctx.Log.Infof("Cluster %s doesn't exist in Atlas - creating", cluster.Spec.Name)
+		c, _, err = ctx.Client.Clusters.Create(context.Background(), project.Status.ID, c)
 		if err != nil {
 			return c, workflow.Terminate(workflow.ClusterNotCreatedInAtlas, err.Error())
 		}
@@ -47,20 +40,33 @@ func (r *AtlasClusterReconciler) ensureClusterState(log *zap.SugaredLogger, conn
 
 	switch c.StateName {
 	case "IDLE":
-		spec, err := cluster.Spec.Cluster()
-		if err != nil {
-			return c, workflow.Terminate(workflow.Internal, err.Error())
-		}
-
-		if done, err := clusterMatchesSpec(log, c, cluster.Spec); err != nil {
+		if done, err := clusterMatchesSpec(ctx.Log, c, cluster.Spec); err != nil {
 			return c, workflow.Terminate(workflow.Internal, err.Error())
 		} else if done {
 			return c, workflow.OK()
 		}
 
-		c, _, err = client.Clusters.Update(ctx, project.Status.ID, cluster.Spec.Name, spec)
+		spec, err := cluster.Spec.Cluster()
 		if err != nil {
-			return c, workflow.Terminate(workflow.ClusterNotCreatedInAtlas, err.Error())
+			return c, workflow.Terminate(workflow.Internal, err.Error())
+		}
+
+		if cluster.Spec.Paused != nil {
+			if c.Paused == nil || *c.Paused != *cluster.Spec.Paused {
+				// paused is different from Atlas
+				// we need to first send a special (un)pause request before reconciling everything else
+				spec = &mongodbatlas.Cluster{
+					Paused: cluster.Spec.Paused,
+				}
+			} else {
+				// otherwise, don't send the paused field
+				spec.Paused = nil
+			}
+		}
+
+		c, _, err = ctx.Client.Clusters.Update(context.Background(), project.Status.ID, cluster.Spec.Name, spec)
+		if err != nil {
+			return c, workflow.Terminate(workflow.ClusterNotUpdatedInAtlas, err.Error())
 		}
 
 		return c, workflow.InProgress(workflow.ClusterUpdating, "cluster is updating")
@@ -82,11 +88,11 @@ func (r *AtlasClusterReconciler) ensureClusterState(log *zap.SugaredLogger, conn
 // Direct comparison is not feasible because Atlas will set a lot of fields to default values, so we need to apply our changes on top of that.
 func clusterMatchesSpec(log *zap.SugaredLogger, cluster *mongodbatlas.Cluster, spec mdbv1.AtlasClusterSpec) (bool, error) {
 	clusterMerged := mongodbatlas.Cluster{}
-	if err := jsonCopy(&clusterMerged, cluster); err != nil {
+	if err := compat.JSONCopy(&clusterMerged, cluster); err != nil {
 		return false, err
 	}
 
-	if err := jsonCopy(&clusterMerged, spec); err != nil {
+	if err := compat.JSONCopy(&clusterMerged, spec); err != nil {
 		return false, err
 	}
 
@@ -96,18 +102,4 @@ func clusterMatchesSpec(log *zap.SugaredLogger, cluster *mongodbatlas.Cluster, s
 	}
 
 	return d == "", nil
-}
-
-func jsonCopy(dst, src interface{}) error {
-	b, err := json.Marshal(src)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(b, &dst)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
