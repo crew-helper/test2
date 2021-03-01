@@ -6,8 +6,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  failed:
+    name: failed something
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2.3.1
+
+      - name: failed
+        run: |
+          echo test
+          sleep 20
+          exit 1
+
   test1:
     name: E2E tests
+    if: success()
     runs-on: ubuntu-latest
     env:
       # uncomment the below for local testing
@@ -27,7 +41,7 @@ jobs:
         env:
           cluster_name: ${{ matrix.test }}
         run: |
-          sleep 5
+          sleep 500
           echo $cluster_name
 
 
