@@ -10,10 +10,6 @@ jobs:
   prepare-e2e:
     name: Prepare E2E configuration and image
     runs-on: ubuntu-latest
-    env:
-      # uncomment the below for local testing
-      DOCKER_REPO: ${{ env.DOCKER_REGISTRY }}/mongodb-atlas-kubernetes-operator
-      # DOCKER_REPO: mongodb/mongodb-atlas-kubernetes-operator-prerelease
     steps:
 
     - name: Check out code
@@ -36,10 +32,6 @@ jobs:
     name: E2E tests
     needs: prepare-e2e
     runs-on: ubuntu-latest
-    env:
-      # uncomment the below for local testing
-      # DOCKER_REPO: ${{ env.DOCKER_REGISTRY }}/mongodb-atlas-kubernetes-operator
-      DOCKER_REPO: mongodb/mongodb-atlas-kubernetes-operator-prerelease
     strategy:
       fail-fast: false
       matrix:
@@ -107,7 +99,7 @@ jobs:
         kubectl config current-context
         sleep 10
         kubectl config current-context
-        
+
         # go version
         # go get github.com/onsi/ginkgo/ginkgo && \
         # go get github.com/onsi/gomega/...
