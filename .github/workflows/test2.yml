@@ -16,12 +16,12 @@ jobs:
       - name: failed
         run: |
           echo test
-          sleep 20
+          sleep 30
           exit 1
 
   test1:
     name: E2E tests
-    if: success()
+    if: (needs.failed.result == 'success')
     runs-on: ubuntu-latest
     env:
       # uncomment the below for local testing
