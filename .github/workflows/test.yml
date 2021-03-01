@@ -6,52 +6,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  unit-test:
-    name: Unit tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2.3.4
-
-      - name: Cache multiple paths
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: '1.15.6'
-      - run: go version
-      - name: Run testing
-        run: CGO_ENABLED=0 go test -v $(go list ./pkg/...)
-
-  int-test:
-    name: Integration tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2.3.4
-
-      - name: Cache multiple paths
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum') }}
-      - name: Run testing
-        uses: ./.github/actions/int-test
-        with:
-          ATLAS_ORG_ID: ${{ secrets.ATLAS_ORG_ID }}
-          ATLAS_PUBLIC_KEY: ${{ secrets.ATLAS_PUBLIC_KEY }}
-          ATLAS_PRIVATE_KEY: ${{ secrets.ATLAS_PRIVATE_KEY }}
 
   prepare-e2e:
     name: Prepare E2E configuration and image
-    needs: [unit-test]
     runs-on: ubuntu-latest
     env:
       # uncomment the below for local testing
-      # DOCKER_REPO: ${{ env.DOCKER_REGISTRY }}/mongodb-atlas-kubernetes-operator
-      DOCKER_REPO: mongodb/mongodb-atlas-kubernetes-operator-prerelease
+      DOCKER_REPO: ${{ env.DOCKER_REGISTRY }}/mongodb-atlas-kubernetes-operator
+      # DOCKER_REPO: mongodb/mongodb-atlas-kubernetes-operator-prerelease
     steps:
 
     - name: Check out code
@@ -66,8 +28,8 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        repository: ${{ env.DOCKER_REPO }}
-        registry: ${{ env.DOCKER_REGISTRY }}
+        repository: ${{ secrets.DOCKER_REPO }}
+        registry: ${{ secrets.DOCKER_REGISTRY }}
         tags: ${{ steps.prepare.outputs.tag }}
 
   e2e:
@@ -96,7 +58,7 @@ jobs:
     - name: Generate configuration for the tests
       uses: ./.github/actions/gen-install-scripts
       with:
-        IMAGE_URL: ${{ env.DOCKER_REPO }}:${{ steps.prepare.outputs.tag }}
+        IMAGE_URL: ${{ secrets.DOCKER_REPO }}:${{ steps.prepare.outputs.tag }}
         ENV: dev
 
     - name: Set properties
@@ -115,17 +77,17 @@ jobs:
         node_image: kindest/node:${{ steps.properties.outputs.k8s_version }}
         cluster_name: ${{ matrix.test }}
 
-    - name: Setup Go
-      if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.15.6'
+    # - name: Setup Go
+    #   if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
+    #   uses: actions/setup-go@v2
+    #   with:
+    #     go-version: '1.15.6'
 
-    - name: Install MongoCLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y mongocli
-        mongocli --version
+    # - name: Install MongoCLI
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y mongocli
+    #     mongocli --version
 
     - name: Run e2e test
       if: ${{ steps.properties.outputs.k8s_platform == 'kind' && !env.ACT }}
@@ -139,10 +101,16 @@ jobs:
         TEST_NAME: "${{ matrix.test }}"
       run: |
         kubectl version
-
-        go version
-        go get github.com/onsi/ginkgo/ginkgo && \
-        go get github.com/onsi/gomega/...
-        ginkgo --focus "${TEST_NAME}" -nodes=3 -x test/e2e/
+        kind get clusters
+        kubectl config current-context
+        sleep 10
+        kubectl config current-context
+        sleep 10
+        kubectl config current-context
+        
+        # go version
+        # go get github.com/onsi/ginkgo/ginkgo && \
+        # go get github.com/onsi/gomega/...
+        # ginkgo --focus "${TEST_NAME}" -nodes=3 -x test/e2e/
 
 # TODO if int test failed - stop e2e, add job for cleanup Atlas projects/clusters
