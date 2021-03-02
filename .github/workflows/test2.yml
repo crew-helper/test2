@@ -13,6 +13,16 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2.3.1
 
+      - name: file
+        run: |
+          echo "test1" >> math-homework.txt
+
+      - name: Upload math result for job 1
+        uses: actions/upload-artifact@v2
+        with:
+          name: homework
+          path: math-homework.txt
+
       - name: failed
         run: |
           echo test
@@ -43,7 +53,6 @@ jobs:
         run: |
           sleep 500
           echo $cluster_name
-
 
   # e2e:
   #   name: E2E tests
