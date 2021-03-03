@@ -15,16 +15,16 @@ jobs:
 
       - name: file
         run: |
-          echo "test1" >> math-homework.txt
-          echo "test2" >> russ-homework.txt
+          mkdir -p data
+          echo "test1" >> data/math-homework.txt
+          echo "test2" >> data/russ-homework.txt
 
       - name: Upload math result for job 1
         uses: actions/upload-artifact@v2
         with:
           name: logs
-          path: |
-            math-homework.txt
-            russ-homework.txt
+          path: data/**
+
 
 
       - name: failed
