@@ -28,12 +28,13 @@ jobs:
 
 
       - name: failed
-        continue-on-error: true
         run: |
           echo test
           sleep 30
           exit 1
+
       - name: secrets.ATLAS_PRIVATE_KEY
+        if: ${{ failure() }}
         run: |
           echo "secret step"
 
