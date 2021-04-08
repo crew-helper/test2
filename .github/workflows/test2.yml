@@ -6,6 +6,17 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    name: failed something
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2.3.1
+
+      - name: file
+        run: |
+          helm version
+          
   failed:
     name: failed something
     runs-on: ubuntu-latest
