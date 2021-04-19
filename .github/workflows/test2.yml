@@ -16,12 +16,11 @@ jobs:
       - name: file
         run: |
           helm version
-          sudo apt-get install gnupg
-          wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
-          sudo apt-get update
-          sudo apt-get install -y gnupg, mongocli
+          wget https://github.com//mongodb/mongocli/releases/download/v1.15.1/mongocli_1.15.1_linux_x86_64.tar.gz -O mongocli.tar.gz --no-check-certificate
+          tar --strip-components=1 -xf mongocli.tar.gz -C /usr/local/bin/mongocli
+
           mongocli --version
-          
+
   failed:
     name: failed something
     runs-on: ubuntu-latest
