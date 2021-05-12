@@ -28,14 +28,16 @@ jobs:
     # Runs a single command using the runners shell
     - name: Send greeting
       run: echo "Hello ${{ github.event.inputs.name }}"
-        
+
+    - name: Checkout helm charts repo
+      uses: actions/checkout@v2
+
     - name: Checkout helm charts repo
       uses: actions/checkout@v2
       with:
         repository: leo-ri/helm-charts
         path: charts
-    - name: Checkout helm charts repo
-      uses: actions/checkout@v2
+
         
     - name: Check
       run: |
