@@ -33,13 +33,13 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: leo-ri/helm-charts
-        path: ../charts
+        path: charts
     - name: Checkout helm charts repo
       uses: actions/checkout@v2
         
     - name: Check
       run: |
         ls -l
-        echo "go to ../charts"
-        cd ../charts
+        echo "go to charts"
+        cd charts
         ls -l
