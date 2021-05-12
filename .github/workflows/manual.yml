@@ -32,7 +32,7 @@ jobs:
     - name: Checkout helm charts repo
       uses: actions/checkout@v2
       with:
-        repository: my-org/react
+        repository: leo-ri/helm-charts
         path: charts
         
     - name: Check
