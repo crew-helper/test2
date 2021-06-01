@@ -36,7 +36,7 @@ jobs:
         chmod +x opm && sudo mv opm /usr/local/bin/opm
         wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-4.6/openshift-client-linux.tar.gz -O openshift.tar.gz
         tar xvf openshift.tar.gz
-        chmod +x oc && sudo mv opm /usr/local/bin/oc
+        chmod +x oc && sudo mv oc /usr/local/bin/oc
         sudo apt-get -y install podman
         opm version
         oc version
