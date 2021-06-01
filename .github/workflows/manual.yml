@@ -29,6 +29,19 @@ jobs:
     - name: Send greeting
       run: echo "Hello ${{ github.event.inputs.name }}"
 
+    - name: Download tools for openshift ui tests
+      run: |
+        wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-4.6/opm-linux.tar.gz -O opm.tar.gz
+        tar xvf opm.tar.gz
+        chmod +x opm && mv opm /usr/local/bin/opm
+        wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest-4.6/openshift-client-linux.tar.gz -O openshift.tar.gz
+        tar xvf openshift.tar.gz
+        chmod +x oc && mv opm /usr/local/bin/oc
+        apt-get -y install podman
+        opm version
+        oc version
+        podman --version
+
     - name: Checkout helm charts repo
       uses: actions/checkout@v2
 
