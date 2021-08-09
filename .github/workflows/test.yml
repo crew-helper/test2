@@ -1,13 +1,15 @@
 name: Test
 
 on:
-  # push:
-  #   branches:
+  pull_request_target:
+    types: [labeled]
   workflow_dispatch:
 
 jobs:
 
   prepare-e2e:
+    if: contains(github.event.pull_request.labels.*.name, 'dependencies') || contains(github.event.pull_request.labels.*.name,
+      'safe-to-test')
     name: Prepare E2E configuration and image
     runs-on: ubuntu-latest
     steps:
