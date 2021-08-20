@@ -28,7 +28,7 @@ jobs:
       - name: check it
         id: check
         env:
-          secret: ${{ secret[steps.prepare-step.outputs.secret] }}
+          secret: ${{ secrets[steps.prepare-step.outputs.secret] }}
         run: |
           echo "here it is"
           echo $secret
