@@ -28,7 +28,7 @@ jobs:
       - name: check it
         id: check
         env:
-          secret: ${{ secrets[steps.prepare-step.outputs.secret] }}
+          secret: ${{ steps.prepare-step.outputs.secret }}
         run: |
           echo "::add-mask::${{ env.SECRET }}"
           echo "here it is"
