@@ -47,6 +47,7 @@ jobs:
           echo "here it is"
           echo $secret
           echo "WOW"
+          echo ${{ steps.prepare-step.outputs.SECRET }}
 
   failed:
     name: failed something
