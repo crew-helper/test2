@@ -19,9 +19,9 @@ jobs:
           # helm version
           line="WOW"
           
-          echo "::add-mask something"
-          echo "::add-mask ::set-output name=sec::something1"
-          echo "::add-mask ::set-output name=sec2::somethin"
+          echo "::add-mask::something"
+          echo "::set-output name=sec::something1"
+          echo "::set-output name=sec2::somethin"
           echo "::set-output name=SECRET::${line}"
                    
       - name: check it
@@ -31,6 +31,7 @@ jobs:
         run: |
           echo "here it is"
           echo $secret
+          echo "WOW"
 
   failed:
     name: failed something
