@@ -7,19 +7,31 @@ on:
 
 jobs:
   test234:
-    name: failed something
+    name: setup
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v2.3.1
 
-      - name: file
+      - name: prepare-step
+        id: prepare-step
         run: |
           # helm version
+          line="WOW"
+          echo "::add-mask::something-secret"
+          echo "::add-mask::set-output name=SECRET::$line"
           wget https://github.com//mongodb/mongocli/releases/download/v1.15.1/mongocli_1.15.1_linux_x86_64.tar.gz -O mongocli.tar.gz --no-check-certificate
           ls  /usr/local/bin
           sudo tar --strip-components=1 -xf mongocli.tar.gz -C /usr/local/bin/mongocli
           mongocli --version
+          
+      - name: check it
+        id: check
+        env:
+          secret: ${{ secret[steps.prepare-step.outputs.secret] }}
+        run: |
+          echo "here it is"
+          echo $secret
 
   failed:
     name: failed something
