@@ -18,7 +18,8 @@ jobs:
         run: |
           # helm version
           line="WOW"
-          
+          MY_NAME="Mona The Octocat"
+          echo "::add-mask::$MY_NAME"
           echo "::add-mask::something"
           echo "::set-output name=sec::something1"
           echo "::set-output name=sec2::somethin"
