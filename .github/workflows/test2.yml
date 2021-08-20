@@ -20,11 +20,7 @@ jobs:
           line="WOW"
           echo "::add-mask::something-secret"
           echo "::add-mask::set-output name=SECRET::$line"
-          wget https://github.com//mongodb/mongocli/releases/download/v1.15.1/mongocli_1.15.1_linux_x86_64.tar.gz -O mongocli.tar.gz --no-check-certificate
-          ls  /usr/local/bin
-          sudo tar --strip-components=1 -xf mongocli.tar.gz -C /usr/local/bin/mongocli
-          mongocli --version
-          
+                   
       - name: check it
         id: check
         env:
