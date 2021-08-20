@@ -19,7 +19,7 @@ jobs:
           # helm version
           line="WOW"
           echo "::add-mask::something-secret"
-          echo "::add-mask::set-output name=SECRET::$line"
+          echo "::add-mask::set-output name=SECRET::${line}"
                    
       - name: check it
         id: check
