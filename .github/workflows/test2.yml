@@ -27,9 +27,13 @@ jobs:
           # helm version
           line="WOW"
           
-
+          echo "::add-mask::$line"
+          echo "::add-mask::$MY_NAME"
+          echo "::add-mask::something"
+          
           echo "::set-output name=sec::something1"
           echo "::set-output name=sec2::somethin"
+          echo "::set-output name=sec3::something"
           echo "::set-output name=SECRET::${line}"
           
                    
@@ -39,9 +43,7 @@ jobs:
           secret: ${{ steps.prepare-step.outputs.SECRET }}
         run: |
           MY_NAME="Mona The Octocat"
-          echo "::add-mask::$SECRET"
-          echo "::add-mask::$MY_NAME"
-          echo "::add-mask::something"
+          
           echo "here it is"
           echo $secret
           echo "WOW"
