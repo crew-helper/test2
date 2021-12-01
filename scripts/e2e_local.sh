@@ -18,7 +18,7 @@ sed -i -e 's/cloud.mongodb.com/cloud-qa.mongodb.com/' bundle/manifests/mongodb-a
 # docker build -t "${image}" .
 # docker push "${image}"
 
-#bundles
+#bundlessdfsdf
 # bundle_image=$(grep "DOCKER_REGISTRY" .env | cut -d "=" -f 2)/$(grep "DOCKER_BUNDLES_REPO" .env | cut -d "=" -f 2):$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD) #Registry is nessary
 # export BUNDLE_IMAGE="${bundle_image}"
 # docker build -f bundle.Dockerfile -t "${bundle_image}" .
