@@ -100,7 +100,7 @@ jobs:
     env:
       # uncomment the below for local testing
       # DOCKER_REPO: ${{ env.DOCKER_REGISTRY }}/mongodb-atlas-kubernetes-operator
-      DOCKER_REPO: mongodb/mongodb-atlas-kubernetes-operator-prerelease
+      DOCKER_REPO: leori/test
     steps:
       - name: Check out code
         uses: actions/checkout@v2.3.4
