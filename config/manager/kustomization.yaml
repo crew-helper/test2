@@ -8,4 +8,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: docker.io/leori/test
-  newTag: CLOUDP-82255-ddt-d1f7a60
+  newTag: CLOUDP-106704-helm-test-fix-d531daa

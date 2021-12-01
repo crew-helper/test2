@@ -1,4 +1,0 @@
-namespace: ns-9a82fc45-3602-4e37-98e7-7f25a3b6ade5
-resources:
-- crds.yaml
-- namespaced-config.yaml

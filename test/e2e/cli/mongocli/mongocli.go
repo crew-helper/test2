@@ -3,6 +3,7 @@ package mongocli
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -62,11 +63,7 @@ func GetClustersInfo(projectID string, name string) mongodbatlas.Cluster {
 
 func IsProjectInfoExist(projectID string) bool {
 	session := cli.Execute("mongocli", "iam", "project", "describe", projectID, "-o", "json")
-	Eventually(
-		func() int {
-			return session.ExitCode()
-		},
-	).ShouldNot(Equal(-1))
+	cli.SessionShouldExit(session)
 	return session.ExitCode() == 0
 }
 
@@ -104,5 +101,29 @@ func GetClusterStateName(projectID string, clusterName string) string {
 
 func GetVersionOutput() {
 	session := cli.Execute("mongocli", "--version")
-	session.Wait(10)
+	session.Wait()
+}
+
+func GetUser(userName, projectID string) mongodbatlas.DatabaseUser {
+	EventuallyWithOffset(1, IsUserExist(userName, projectID), "7m", "10s").Should(BeTrue(), "User doesn't exist")
+	session := cli.Execute("mongocli", "atlas", "dbusers", "get", userName, "--projectId", projectID, "-o", "json")
+	cli.SessionShouldExit(session)
+	output := session.Out.Contents()
+	var user mongodbatlas.DatabaseUser
+	ExpectWithOffset(1, json.Unmarshal(output, &user)).ShouldNot(HaveOccurred())
+	return user
+}
+
+func IsUserExist(userName, projectID string) bool {
+	session := cli.Execute("mongocli", "atlas", "dbusers", "get", userName, "--projectId", projectID, "-o", "json")
+	cli.SessionShouldExit(session)
+	return session.ExitCode() == 0
+}
+
+func CreateAtlasProjectAPIKey(role, projectID string) (string, string) {
+	session := cli.ExecuteWithoutWriter("mongocli", "iam", "project", "apikey", "create", "--projectId", projectID, "--desc", "\"created from the test\"", "--role", role)
+	EventuallyWithOffset(1, session.Wait()).Should(Say("created"))
+	public := regexp.MustCompile("Public API Key (.+)").FindStringSubmatch(string(session.Out.Contents()))[1]
+	private := regexp.MustCompile("Private API Key (.+)").FindStringSubmatch(string(session.Out.Contents()))[1]
+	return public, private
 }

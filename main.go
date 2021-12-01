@@ -20,6 +20,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
@@ -31,18 +33,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	ctrzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	mdbv1 "github.com/mongodb/mongodb-atlas-kubernetes/pkg/api/v1"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/atlas"
 	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/atlascluster"
 	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/atlasdatabaseuser"
 	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/atlasproject"
 	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/controller/watch"
+	"github.com/mongodb/mongodb-atlas-kubernetes/pkg/util/kube"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	// Set by the linker during link time.
+	version = "unknown"
 )
 
 func init() {
@@ -50,6 +58,8 @@ func init() {
 
 	utilruntime.Must(mdbv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
+
+	atlas.ProductVersion = version
 }
 
 func main() {
@@ -60,53 +70,71 @@ func main() {
 	logger := ctrzap.NewRaw(ctrzap.UseDevMode(true), ctrzap.StacktraceLevel(zap.ErrorLevel))
 
 	config := parseConfiguration(logger.Sugar())
+
 	ctrl.SetLogger(zapr.NewLogger(logger))
 
+	logger.Sugar().Infof("MongoDB Atlas Operator version %s", version)
+
+	syncPeriod := time.Hour * 3
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     config.MetricsAddr,
 		Port:                   9443,
+		Namespace:              config.Namespace,
 		HealthProbeBindAddress: config.ProbeAddr,
 		LeaderElection:         config.EnableLeaderElection,
 		LeaderElectionID:       "06d035fb.mongodb.com",
-		Namespace:              config.WatchedNamespaces,
+		SyncPeriod:             &syncPeriod,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	operatorPod := operatorPodObjectKey()
+	// globalPredicates should be used for general controller Predicates
+	// that should be applied to all controllers in order to limit the
+	// resources they receive events for.
+	globalPredicates := []predicate.Predicate{
+		watch.CommonPredicates(),                                  // ignore spurious changes. status changes etc.
+		watch.SelectNamespacesPredicate(config.WatchedNamespaces), // select only desired namespaces
+	}
 
 	if err = (&atlascluster.AtlasClusterReconciler{
-		Client:      mgr.GetClient(),
-		Log:         logger.Named("controllers").Named("AtlasCluster").Sugar(),
-		Scheme:      mgr.GetScheme(),
-		AtlasDomain: config.AtlasDomain,
-		OperatorPod: operatorPod,
+		Client:           mgr.GetClient(),
+		Log:              logger.Named("controllers").Named("AtlasCluster").Sugar(),
+		Scheme:           mgr.GetScheme(),
+		AtlasDomain:      config.AtlasDomain,
+		GlobalAPISecret:  config.GlobalAPISecret,
+		GlobalPredicates: globalPredicates,
+		EventRecorder:    mgr.GetEventRecorderFor("AtlasCluster"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AtlasCluster")
 		os.Exit(1)
 	}
 
 	if err = (&atlasproject.AtlasProjectReconciler{
-		Client:          mgr.GetClient(),
-		Log:             logger.Named("controllers").Named("AtlasProject").Sugar(),
-		Scheme:          mgr.GetScheme(),
-		AtlasDomain:     config.AtlasDomain,
-		ResourceWatcher: watch.NewResourceWatcher(),
-		OperatorPod:     operatorPod,
+		Client:           mgr.GetClient(),
+		Log:              logger.Named("controllers").Named("AtlasProject").Sugar(),
+		Scheme:           mgr.GetScheme(),
+		AtlasDomain:      config.AtlasDomain,
+		ResourceWatcher:  watch.NewResourceWatcher(),
+		GlobalAPISecret:  config.GlobalAPISecret,
+		GlobalPredicates: globalPredicates,
+		EventRecorder:    mgr.GetEventRecorderFor("AtlasProject"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AtlasProject")
 		os.Exit(1)
 	}
 
 	if err = (&atlasdatabaseuser.AtlasDatabaseUserReconciler{
-		Client:      mgr.GetClient(),
-		Log:         logger.Named("controllers").Named("AtlasDatabaseUser").Sugar(),
-		Scheme:      mgr.GetScheme(),
-		AtlasDomain: config.AtlasDomain,
-		OperatorPod: operatorPod,
+		Client:           mgr.GetClient(),
+		Log:              logger.Named("controllers").Named("AtlasDatabaseUser").Sugar(),
+		Scheme:           mgr.GetScheme(),
+		AtlasDomain:      config.AtlasDomain,
+		ResourceWatcher:  watch.NewResourceWatcher(),
+		GlobalAPISecret:  config.GlobalAPISecret,
+		GlobalPredicates: globalPredicates,
+		EventRecorder:    mgr.GetEventRecorderFor("AtlasDatabaseUser"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AtlasDatabaseUser")
 		os.Exit(1)
@@ -133,41 +161,63 @@ type Config struct {
 	AtlasDomain          string
 	EnableLeaderElection bool
 	MetricsAddr          string
-	WatchedNamespaces    string
+	Namespace            string
+	WatchedNamespaces    map[string]bool
 	ProbeAddr            string
+	GlobalAPISecret      client.ObjectKey
 }
 
 // ParseConfiguration fills the 'OperatorConfig' from the flags passed to the program
 func parseConfiguration(log *zap.SugaredLogger) Config {
+	var globalAPISecretName string
 	config := Config{}
 	flag.StringVar(&config.AtlasDomain, "atlas-domain", "https://cloud.mongodb.com", "the Atlas URL domain name (no slash in the end).")
 	flag.StringVar(&config.MetricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&config.ProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&globalAPISecretName, "global-api-secret-name", "", "The name of the Secret that contains Atlas API keys. "+
+		"It is used by the Operator if AtlasProject configuration doesn't contain API key reference. Defaults to <deployment_name>-api-key.")
 	flag.BoolVar(&config.EnableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 
 	flag.Parse()
 
+	config.GlobalAPISecret = operatorGlobalKeySecretOrDefault(globalAPISecretName)
+
 	// dev note: we pass the watched namespace as the env variable to use the Kubernetes Downward API. Unfortunately
 	// there is no way to use it for container arguments
-	watchedNamespace := os.Getenv("WATCHED_NAMESPACE")
-	if watchedNamespace != "" {
-		log.Infof("The Operator is watching the namespace %s", watchedNamespace)
+	watchedNamespace := os.Getenv("WATCH_NAMESPACE")
+	config.WatchedNamespaces = make(map[string]bool)
+	for _, namespace := range strings.Split(watchedNamespace, ",") {
+		namespace = strings.TrimSpace(namespace)
+		log.Infof("The Operator is watching the namespace %s", namespace)
+		config.WatchedNamespaces[namespace] = true
 	}
-	config.WatchedNamespaces = watchedNamespace
+
+	if len(config.WatchedNamespaces) == 1 {
+		config.Namespace = watchedNamespace
+	}
+
 	return config
 }
 
-func operatorPodObjectKey() client.ObjectKey {
-	operatorName := os.Getenv("OPERATOR_NAME")
-	if operatorName == "" {
-		log.Fatal(`"OPERATOR_NAME" environment variable must be set!`)
+func operatorGlobalKeySecretOrDefault(secretNameOverride string) client.ObjectKey {
+	secretName := secretNameOverride
+	if secretName == "" {
+		operatorPodName := os.Getenv("OPERATOR_POD_NAME")
+		if operatorPodName == "" {
+			log.Fatal(`"OPERATOR_POD_NAME" environment variable must be set!`)
+		}
+		deploymentName, err := kube.ParseDeploymentNameFromPodName(operatorPodName)
+		if err != nil {
+			log.Fatalf(`Failed to get Operator Deployment name from "OPERATOR_POD_NAME" environment variable: %s`, err.Error())
+		}
+		secretName = deploymentName + "-api-key"
 	}
 	operatorNamespace := os.Getenv("OPERATOR_NAMESPACE")
 	if operatorNamespace == "" {
 		log.Fatal(`"OPERATOR_NAMESPACE" environment variable must be set!`)
 	}
 
-	return client.ObjectKey{Namespace: operatorNamespace, Name: operatorName}
+	return client.ObjectKey{Namespace: operatorNamespace, Name: secretName}
 }

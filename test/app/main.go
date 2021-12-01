@@ -1,9 +1,11 @@
 package main
+
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -25,12 +27,17 @@ var (
 	// related to DB
 	dbName         = "Ships"
 	collectionName = "ShipSpec"
-	port           = 8080
+	portDefault    = "8080"
 )
 
 func main() {
 	r := newRouter()
-	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = portDefault
+	}
+	fmt.Print("Using port: " + port)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), r)
 }
 
 func newRouter() *mux.Router {
@@ -50,7 +57,7 @@ func getKeyValue(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	collection, err := getMongoCollection(dbName, collectionName)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	filter := bson.M{"key": key}
 	var foundShip ModelShip
@@ -63,14 +70,14 @@ func postKeyValue(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Lets see\n")
 	collection, err := getMongoCollection(dbName, collectionName)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	ship := getShipFromRequest(r)
-	fmt.Fprintf(w, "got ship key: " +ship.Key+"\n")
+	fmt.Fprintf(w, "got ship key: %s\n", ship.Key)
 	res, err := collection.InsertOne(ctx, ship)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	response, _ := json.Marshal(res)
@@ -81,18 +88,21 @@ func deleteKeyValue(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	collection, err := getMongoCollection(dbName, collectionName)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
-	deleteResult, err := collection.DeleteMany(ctx, bson.M{"key":key})
+	deleteResult, err := collection.DeleteMany(ctx, bson.M{"key": key})
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	fmt.Fprintf(w, fmt.Sprintf("It is working. Deleted documents: %d", deleteResult.DeletedCount))
 }
 
-// TODO I will change it if req
 func getSecret() string {
-	return os.Getenv("CONNECTIONSTRING")
+	if val, ok := os.LookupEnv("connectionStringStandardSrv"); ok {
+		return val
+	}
+	// Before the Operator 0.6.0 is released we need to "failback" to the previous env variable name in our tests
+	return os.Getenv("connectionString.standardSrv")
 }
 
 func getMongoClient() (*mongo.Client, error) {
@@ -100,11 +110,11 @@ func getMongoClient() (*mongo.Client, error) {
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	fmt.Println("Successfully connected and pinged.")
 	return client, nil
@@ -112,7 +122,6 @@ func getMongoClient() (*mongo.Client, error) {
 
 func getMongoCollection(DbName string, CollectionName string) (*mongo.Collection, error) {
 	client, err := getMongoClient()
-
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +132,7 @@ func getMongoCollection(DbName string, CollectionName string) (*mongo.Collection
 }
 
 type ModelShip struct {
-	Key   string `json:"key"`
+	Key       string `json:"key"`
 	ShipModel string `json:"shipmodel,omitempty"`
 	Hp        int    `json:"hp,omitempty"`
 }

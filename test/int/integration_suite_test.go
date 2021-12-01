@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/go-logr/zapr"
 	. "github.com/onsi/ginkgo"
@@ -36,6 +37,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	ctrzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -55,6 +57,12 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
+const (
+	EventuallyTimeout   = 60 * time.Second
+	ConsistentlyTimeout = 1 * time.Second
+	PollingInterval     = 10 * time.Second
+)
+
 var (
 	// This variable is "global" - as is visible only on the first ginkgo node
 	testEnv *envtest.Environment
@@ -68,7 +76,14 @@ var (
 	namespace         corev1.Namespace
 	cfg               *rest.Config
 	managerCancelFunc context.CancelFunc
+	atlasDomain       string
 )
+
+func init() {
+	if atlasDomain = os.Getenv("ATLAS_DOMAIN"); atlasDomain == "" {
+		atlasDomain = "https://cloud-qa.mongodb.com"
+	}
+}
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -124,6 +139,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	Expect(k8sClient).ToNot(BeNil())
 
 	atlasClient, connection = prepareAtlasClient()
+	defaultTimeouts()
 })
 
 var _ = SynchronizedAfterSuite(func() {
@@ -133,6 +149,12 @@ var _ = SynchronizedAfterSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 })
 
+func defaultTimeouts() {
+	SetDefaultEventuallyTimeout(EventuallyTimeout)
+	SetDefaultEventuallyPollingInterval(PollingInterval)
+	SetDefaultConsistentlyDuration(ConsistentlyTimeout)
+}
+
 func prepareAtlasClient() (*mongodbatlas.Client, atlas.Connection) {
 	orgID, publicKey, privateKey := os.Getenv("ATLAS_ORG_ID"), os.Getenv("ATLAS_PUBLIC_KEY"), os.Getenv("ATLAS_PRIVATE_KEY")
 	if orgID == "" || publicKey == "" || privateKey == "" {
@@ -141,7 +163,7 @@ func prepareAtlasClient() (*mongodbatlas.Client, atlas.Connection) {
 	withDigest := httputil.Digest(publicKey, privateKey)
 	httpClient, err := httputil.DecorateClient(&http.Client{Transport: http.DefaultTransport}, withDigest)
 	Expect(err).ToNot(HaveOccurred())
-	aClient, err := mongodbatlas.New(httpClient, mongodbatlas.SetBaseURL("https://cloud-qa.mongodb.com/api/atlas/v1.0/"))
+	aClient, err := mongodbatlas.New(httpClient, mongodbatlas.SetBaseURL(atlasDomain+"/api/atlas/v1.0/"))
 	Expect(err).ToNot(HaveOccurred())
 
 	return aClient, atlas.Connection{
@@ -159,11 +181,11 @@ func prepareControllers() {
 
 	namespace = corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "test",
-			// TODO name namespace by the name of the project and include the creation date/time to perform GC
+			Namespace:    "test",
 			GenerateName: "test",
 		},
 	}
+
 	By("Creating the namespace " + namespace.Name)
 	Expect(k8sClient.Create(context.Background(), &namespace)).ToNot(HaveOccurred())
 
@@ -172,35 +194,55 @@ func prepareControllers() {
 
 	ctrl.SetLogger(zapr.NewLogger(logger))
 
+	// Note on the syncPeriod - decreasing this to a smaller time allows to test its work for the long-running tests
+	// (clusters, database users). The prod value is much higher
+	syncPeriod := time.Minute * 30
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:             scheme.Scheme,
-		Namespace:          namespace.Name,
 		MetricsBindAddress: "0",
+		SyncPeriod:         &syncPeriod,
 	})
 	Expect(err).ToNot(HaveOccurred())
 
+	// globalPredicates should be used for general controller Predicates
+	// that should be applied to all controllers in order to limit the
+	// resources they receive events for.
+	globalPredicates := []predicate.Predicate{
+		watch.CommonPredicates(), // ignore spurious changes. status changes etc.
+		watch.SelectNamespacesPredicate(map[string]bool{ // select only desired namespaces
+			namespace.Name: true,
+		}),
+	}
+
 	err = (&atlasproject.AtlasProjectReconciler{
-		Client:          k8sManager.GetClient(),
-		Log:             logger.Named("controllers").Named("AtlasProject").Sugar(),
-		AtlasDomain:     "https://cloud-qa.mongodb.com",
-		ResourceWatcher: watch.NewResourceWatcher(),
-		OperatorPod:     kube.ObjectKey(namespace.Name, "atlas-operator"),
+		Client:           k8sManager.GetClient(),
+		Log:              logger.Named("controllers").Named("AtlasProject").Sugar(),
+		AtlasDomain:      atlasDomain,
+		ResourceWatcher:  watch.NewResourceWatcher(),
+		GlobalAPISecret:  kube.ObjectKey(namespace.Name, "atlas-operator-api-key"),
+		GlobalPredicates: globalPredicates,
+		EventRecorder:    k8sManager.GetEventRecorderFor("AtlasProject"),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&atlascluster.AtlasClusterReconciler{
-		Client:      k8sManager.GetClient(),
-		Log:         logger.Named("controllers").Named("AtlasCluster").Sugar(),
-		AtlasDomain: "https://cloud-qa.mongodb.com",
-		OperatorPod: kube.ObjectKey(namespace.Name, "atlas-operator"),
+		Client:           k8sManager.GetClient(),
+		Log:              logger.Named("controllers").Named("AtlasCluster").Sugar(),
+		AtlasDomain:      atlasDomain,
+		GlobalAPISecret:  kube.ObjectKey(namespace.Name, "atlas-operator-api-key"),
+		GlobalPredicates: globalPredicates,
+		EventRecorder:    k8sManager.GetEventRecorderFor("AtlasCluster"),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&atlasdatabaseuser.AtlasDatabaseUserReconciler{
-		Client:      k8sManager.GetClient(),
-		Log:         logger.Named("controllers").Named("AtlasDatabaseUser").Sugar(),
-		AtlasDomain: "https://cloud-qa.mongodb.com",
-		OperatorPod: kube.ObjectKey(namespace.Name, "atlas-operator"),
+		Client:           k8sManager.GetClient(),
+		Log:              logger.Named("controllers").Named("AtlasDatabaseUser").Sugar(),
+		AtlasDomain:      atlasDomain,
+		EventRecorder:    k8sManager.GetEventRecorderFor("AtlasDatabaseUser"),
+		ResourceWatcher:  watch.NewResourceWatcher(),
+		GlobalAPISecret:  kube.ObjectKey(namespace.Name, "atlas-operator-api-key"),
+		GlobalPredicates: globalPredicates,
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

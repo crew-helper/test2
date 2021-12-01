@@ -19,14 +19,20 @@ const (
 
 // Atlas Cluster reasons
 const (
-	ClusterNotCreatedInAtlas ConditionReason = "ClusterNotCreatedInAtlas"
-	ClusterNotUpdatedInAtlas ConditionReason = "ClusterNotUpdatedInAtlas"
-	ClusterCreating          ConditionReason = "ClusterCreating"
-	ClusterUpdating          ConditionReason = "ClusterUpdating"
+	ClusterNotCreatedInAtlas           ConditionReason = "ClusterNotCreatedInAtlas"
+	ClusterNotUpdatedInAtlas           ConditionReason = "ClusterNotUpdatedInAtlas"
+	ClusterCreating                    ConditionReason = "ClusterCreating"
+	ClusterUpdating                    ConditionReason = "ClusterUpdating"
+	ClusterConnectionSecretsNotCreated ConditionReason = "ClusterConnectionSecretsNotCreated"
 )
 
 // Atlas Database User reasons
 const (
-	DatabaseUserNotCreatedInAtlas ConditionReason = "DatabaseUserNotCreatedInAtlas"
-	DatabaseUserNotUpdatedInAtlas ConditionReason = "DatabaseUserNotUpdatedInAtlas"
+	DatabaseUserNotCreatedInAtlas           ConditionReason = "DatabaseUserNotCreatedInAtlas"
+	DatabaseUserNotUpdatedInAtlas           ConditionReason = "DatabaseUserNotUpdatedInAtlas"
+	DatabaseUserConnectionSecretsNotCreated ConditionReason = "DatabaseUserConnectionSecretsNotCreated"
+	DatabaseUserStaleConnectionSecrets      ConditionReason = "DatabaseUserStaleConnectionSecrets"
+	DatabaseUserClustersAppliedChanges      ConditionReason = "ClustersAppliedDatabaseUsersChanges"
+	DatabaseUserInvalidSpec                 ConditionReason = "DatabaseUserInvalidSpec"
+	DatabaseUserExpired                     ConditionReason = "DatabaseUserExpired"
 )

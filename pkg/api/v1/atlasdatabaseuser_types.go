@@ -18,6 +18,7 @@ package v1
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/atlas/mongodbatlas"
 	corev1 "k8s.io/api/core/v1"
@@ -49,7 +50,7 @@ const (
 // AtlasDatabaseUserSpec defines the desired state of Database User in Atlas
 type AtlasDatabaseUserSpec struct {
 	// Project is a reference to AtlasProject resource the user belongs to
-	Project ResourceRef `json:"projectRef"`
+	Project ResourceRefNamespaced `json:"projectRef"`
 
 	// DatabaseName is a Database against which Atlas authenticates the user. Default value is 'admin'.
 	// +kubebuilder:default=admin
@@ -128,7 +129,19 @@ type ScopeSpec struct {
 }
 
 func (p AtlasDatabaseUser) AtlasProjectObjectKey() client.ObjectKey {
-	return kube.ObjectKey(p.Namespace, p.Spec.Project.Name)
+	ns := p.Namespace
+	if p.Spec.Project.Namespace != "" {
+		ns = p.Spec.Project.Namespace
+	}
+	return kube.ObjectKey(ns, p.Spec.Project.Name)
+}
+
+func (p AtlasDatabaseUser) PasswordSecretObjectKey() *client.ObjectKey {
+	if p.Spec.PasswordSecret != nil {
+		key := kube.ObjectKey(p.Namespace, p.Spec.PasswordSecret.Name)
+		return &key
+	}
+	return nil
 }
 
 func (p *AtlasDatabaseUser) GetStatus() status.Status {
@@ -146,27 +159,47 @@ func (p *AtlasDatabaseUser) UpdateStatus(conditions []status.Condition, options 
 	}
 }
 
-// ToAtlas converts the AtlasDatabaseUser to native Atlas client format. Reads the password from the Secret
-func (p AtlasDatabaseUser) ToAtlas(kubeClient client.Client) (*mongodbatlas.DatabaseUser, error) {
-	var password string
-
+func (p *AtlasDatabaseUser) ReadPassword(kubeClient client.Client) (string, error) {
 	if p.Spec.PasswordSecret != nil {
 		secret := &corev1.Secret{}
-		if err := kubeClient.Get(context.Background(), kube.ObjectKey(p.Namespace, p.Spec.PasswordSecret.Name), secret); err != nil {
-			return nil, err
+		if err := kubeClient.Get(context.Background(), *p.PasswordSecretObjectKey(), secret); err != nil {
+			return "", err
 		}
-		secretData := make(map[string]string)
-		for k, v := range secret.Data {
-			secretData[k] = string(v)
+		p, exist := secret.Data["password"]
+		switch {
+		case !exist:
+			return "", fmt.Errorf("secret %s is invalid: it doesn't contain 'password' field", secret.Name)
+		case len(p) == 0:
+			return "", fmt.Errorf("secret %s is invalid: the 'password' field is empty", secret.Name)
+		default:
+			return string(p), nil
 		}
-		password = secretData["password"]
+	}
+	return "", nil
+}
+
+// ToAtlas converts the AtlasDatabaseUser to native Atlas client format. Reads the password from the Secret
+func (p AtlasDatabaseUser) ToAtlas(kubeClient client.Client) (*mongodbatlas.DatabaseUser, error) {
+	password, err := p.ReadPassword(kubeClient)
+	if err != nil {
+		return nil, err
 	}
 
 	result := &mongodbatlas.DatabaseUser{}
-	err := compat.JSONCopy(result, p.Spec)
+	err = compat.JSONCopy(result, p.Spec)
 	result.Password = password
 
 	return result, err
+}
+
+func (p AtlasDatabaseUser) GetScopes(scopeType ScopeType) []string {
+	var scopeClusters []string
+	for _, scope := range p.Spec.Scopes {
+		if scope.Type == scopeType {
+			scopeClusters = append(scopeClusters, scope.Name)
+		}
+	}
+	return scopeClusters
 }
 
 // ************************************ Builder methods *************************************************
@@ -179,9 +212,10 @@ func NewDBUser(namespace, name, dbUserName, projectName string) *AtlasDatabaseUs
 		},
 		Spec: AtlasDatabaseUserSpec{
 			Username:       dbUserName,
-			Project:        ResourceRef{Name: projectName},
+			Project:        ResourceRefNamespaced{Name: projectName},
 			PasswordSecret: &ResourceRef{},
 			Roles:          []RoleSpec{},
+			Scopes:         []ScopeSpec{},
 		},
 	}
 }
@@ -190,6 +224,7 @@ func (p *AtlasDatabaseUser) WithName(name string) *AtlasDatabaseUser {
 	p.Name = name
 	return p
 }
+
 func (p *AtlasDatabaseUser) WithAtlasUserName(name string) *AtlasDatabaseUser {
 	p.Spec.Username = name
 	return p
@@ -207,6 +242,16 @@ func (p *AtlasDatabaseUser) WithRole(roleName, databaseName, collectionName stri
 
 func (p *AtlasDatabaseUser) WithScope(scopeType ScopeType, name string) *AtlasDatabaseUser {
 	p.Spec.Scopes = append(p.Spec.Scopes, ScopeSpec{Name: name, Type: scopeType})
+	return p
+}
+
+func (p *AtlasDatabaseUser) ClearScopes() *AtlasDatabaseUser {
+	p.Spec.Scopes = make([]ScopeSpec, 0)
+	return p
+}
+
+func (p *AtlasDatabaseUser) WithDeleteAfterDate(date string) *AtlasDatabaseUser {
+	p.Spec.DeleteAfterDate = date
 	return p
 }
 
