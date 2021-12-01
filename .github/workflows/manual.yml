@@ -43,10 +43,10 @@ jobs:
         podman --version
 
     - name: Checkout helm charts repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v2.4.0
 
     - name: Checkout helm charts repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v2.4.0
       with:
         repository: leo-ri/helm-charts
         path: charts
