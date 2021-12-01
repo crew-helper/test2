@@ -17,7 +17,7 @@ import (
 	"github.com/mongodb/mongodb-atlas-kubernetes/test/e2e/utils"
 )
 
-var _ = Describe("[bundle-test] User can deploy operator from bundles", func() {
+var _ = Describe("[bundle-test] User can deploy operator from bundles11111111", func() {
 	var data model.TestDataProvider
 	var imageURL string
 
